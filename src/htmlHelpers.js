@@ -7,7 +7,7 @@ import { snappyUncompressor } from 'hysnappy';
 /**
  * Load and parse a Parquet file.
  * @param {string} filename - The parquet filename (relative to VITE_PATH).
- * @returns {Promise<Array<object>>} Parsed parquet data.
+ * @returns Parsed parquet data.
  */
 async function loadParquet(filename) {
   const { asyncBufferFromUrl, parquetQuery } = await import('hyparquet');
@@ -103,5 +103,43 @@ export function attachRadioListener(radioGroup, callback) {
   radioGroup.addEventListener("calciteRadioButtonGroupChange", () => {
     const selectedValue = radioGroup.value;
     callback(selectedValue);
+  });
+}
+
+ export function attachHoverTooltip(view, hexLayer) {
+  let tooltip = document.getElementById("hover-tooltip");
+  let lastUpdate = 0;
+  const milliseconds = 30; // milliseconds
+
+  view.on("pointer-move", async (event) => {
+    const now = performance.now();
+    if (now - lastUpdate < milliseconds) return; // skip if within throttle window
+    lastUpdate = now;
+
+    const response = await view.hitTest(event, { include: hexLayer });
+    if (response.results.length) {
+      const hitGraphic = response.results[0].graphic;
+      const originalGraphic = hexLayer.source.items.find(
+        g => g.attributes.grid_id === hitGraphic.attributes.grid_id
+      );
+
+      if (originalGraphic) {
+        const attrs = originalGraphic.attributes;
+        tooltip.innerHTML = `
+          <div><strong>Harms:</strong> ${attrs.final_value_harms}</div>
+          <div><strong>Assets:</strong> ${attrs.final_value_assets}</div>
+        `;
+        tooltip.style.left = event.x + -50 + "px";
+        tooltip.style.top = event.y + 200 + "px";
+        tooltip.style.display = "block";
+      }
+    } else {
+      tooltip.style.display = "none";
+    }
+  });
+
+  view.on("pointer-leave", () => {
+    const tooltip = document.getElementById("hover-tooltip");
+    if (tooltip) tooltip.style.display = "none";
   });
 }

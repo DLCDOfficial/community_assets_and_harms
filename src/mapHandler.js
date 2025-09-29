@@ -33,8 +33,8 @@ export function createHexLayer(uniqueHexes, map) {
     return new Graphic({
       geometry: polygon,
       symbol: fillSymbol,
-      attributes: { grid_id: hex, hex_id: hex, final_value_assets: 0.0 }
-    });
+      attributes: { grid_id: hex, hex_id: hex, final_value_assets: 0.0, final_value_harms: 0.0} }
+    );
   });
 
   return new FeatureLayer({
@@ -81,5 +81,20 @@ export async function updateHexValues(hexLayer, hexStore, indicator_set, region)
 
 
   await hexLayer.applyEdits({ updateFeatures: edits });
+
+   // 2️⃣ Update the in-memory graphics directly so hitTest sees them
+  hexLayer.source.items.forEach(graphic => {
+    const hexId = graphic.attributes.hex_id;
+    if (hexStore[hexId]) {
+      const values = calculateValue(region, hexStore[hexId], indicator_set);
+      graphic.attributes.final_value_harms = values.avg_harms;
+      graphic.attributes.final_value_assets = values.avg_assets;
+      graphic.attributes.compositeKey = values.quartile_string;
+      graphic.attributes.displayString = values.displayString;
+    }
+  });
+  hexLayer.refresh();
+
+ 
 
 }

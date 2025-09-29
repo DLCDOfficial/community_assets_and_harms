@@ -1,9 +1,13 @@
 import "./styles.css";
 import { loadHexData } from './dataProcessor.js';
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
+
 import { createHexLayer, updateHexValues } from './mapHandler.js';
-import { createPlaceElements, createIndicatorElements, attachRadioListener } from "./htmlHelpers.js";
+import { createPlaceElements, createIndicatorElements, attachRadioListener, attachHoverTooltip} from "./htmlHelpers.js";
 
 // Individual imports for each component
+import HighlightOptions from "@arcgis/core/views/support/HighlightOptions.js";
+
 import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import "@arcgis/map-components/components/arcgis-legend";
@@ -69,38 +73,58 @@ attachRadioListener(radioGroup, (selected) => {
 
 // When the map loads, create a layer from the hexagons. THEN, update the values of each hexagon.
 const viewElement = document.querySelector("arcgis-map");
+//get the view in order to add hover event 
+const view = viewElement.view;
+
 
 // viewElement.addEventListener("arcgisViewReadyChange", async () => {
 // });
 
+
+
+
 async function selectCity(fileName) {
-  city = fileName
+  city = fileName;
 
-
-
-  if(!indicators){
-    console.log("no indicators selected")
-
+  if (!indicators) {
+    console.log("no indicators selected");
   }
 
   const indicators_set = new Set(indicators);
 
- 
-  const { hexStore, uniqueHexes} = await loadHexData(fileName);
-  
-  const hexLayer = createHexLayer(uniqueHexes, viewElement.map);
+  const { hexStore, uniqueHexes } = await loadHexData(fileName);
+
+  // Create the layer
+  const hexLayer = createHexLayer(uniqueHexes, view.map);
   previous_hex_layer = hexLayer;
   previous_hex_store = hexStore;
-  viewElement.map.add(hexLayer);
-  hexLayer.when(() => {
-    viewElement.view.goTo(hexLayer.fullExtent.expand(1.15));
-  })
 
+  // Add layer to the map
+  view.map.add(hexLayer);
+
+  // Zoom to layer once it’s ready
+  hexLayer.when(() => {
+    view.goTo(hexLayer.fullExtent.expand(1.15));
+  });
+
+
+  
+  // Update hex values (color, fill, etc.)
   await updateHexValues(hexLayer, hexStore, indicators_set, region);
-} 
+  attachHoverTooltip(view, hexLayer);
+ 
+}
+
+  
+
+
+
 
 function clearCity() {
   console.log('clearCity')
+    if (viewElement.map && previous_hex_layer) {
+    const layersToRemove = viewElement.map.layers.filter(layer => layer instanceof FeatureLayer);
+    layersToRemove.forEach(layer => viewElement.map.layers.remove(layer));}
   // clear city and reset extent to statewide
 }
 
