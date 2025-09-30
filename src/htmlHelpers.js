@@ -1,121 +1,138 @@
 // htmlHelpers.js
-// Utility to load harms/assets and place names
-// and create HTML components for dropdown selections
+// Utilities for loading data, creating calcite-combobox items, and handling tooltips
 
-import { snappyUncompressor } from 'hysnappy';
-
-/**
- * Load and parse a Parquet file.
- * @param {string} filename - The parquet filename (relative to VITE_PATH).
- * @returns Parsed parquet data.
- */
-async function loadParquet(filename) {
-  const { asyncBufferFromUrl, parquetQuery } = await import('hyparquet');
-  const prefix = import.meta.env.VITE_PATH;
-  const file = await asyncBufferFromUrl({ url: `${prefix}/${filename}` });
-  return parquetQuery({
-    file,
-    compressors: { SNAPPY: snappyUncompressor() }
-  });
-}
+import { loadParquet } from './dataProcessor.js';
 
 /**
- * Create <calcite-combobox-item> elements from an array of strings.
- * @param {HTMLElement} parentEl - The element to append items to.
- * @param {string[]} values - The list of values/headings.
+ * Append <calcite-combobox-item> elements to a parent element.
+ * @param {HTMLElement} comboboxEl - The combobox container.
+ * @param {string[]} values - Array of values to append.
  */
-function appendComboboxItems(parentEl, values) {
+function appendComboboxItems(comboboxEl, values) {
+  if (!comboboxEl) return;
   values.sort().forEach(val => {
-    const el = document.createElement('calcite-combobox-item');
-    el.setAttribute('value', val);
-    el.setAttribute('heading', val);
-    parentEl.append(el);
+    const item = document.createElement('calcite-combobox-item');
+    item.setAttribute('value', val);
+    item.setAttribute('heading', val);
+    comboboxEl.append(item);
   });
 }
 
 /**
- * Attach a change listener to a combobox.
- * @param {HTMLElement} parentEl - The combobox element.
- * @param {Function} cb - Callback for selection change.
- * @param {object} options
- * @param {boolean} [options.multi=false] - Whether multiple selection is allowed.
- * @param {boolean} [options.normalize=false] - Whether to normalize single values.
+ * Attach a change listener to a calcite-combobox.
+ * Always returns an array of selected values (or empty array).
+ * @param {HTMLElement} comboboxEl
+ * @param {Function} callback - Receives selected values array.
  */
-function attachComboboxListener(parentEl, cb, { multi = false, normalize = false } = {}) {
-  parentEl.addEventListener('calciteComboboxChange', () => {
-    if (parentEl.selectedItems.length > 0) {
-      let values = parentEl.selectedItems.map(item => item.value);
-      if (!multi) {
-        values = values[0];
-        if (normalize && values) {
-          values = values.replaceAll(/[ /]/g, "_").toLowerCase();
-        }
-      }
-      cb(values);
-    } else {
-      cb(null);
-    }
+function attachComboboxListener(comboboxEl, callback) {
+  if (!comboboxEl) return;
+
+  comboboxEl.addEventListener('calciteComboboxChange', () => {
+    const values = comboboxEl.selectedItems?.map(item => item.value) || [];
+    callback(values);
   });
 }
 
 /**
- * Creates and appends `<calcite-combobox-item>` elements to a given parent element
- * based on place names loaded from a Parquet file (`places.parquet`).
- *
- * @param {HTMLElement} parentEl - The `<calcite-combobox>` container.
- * @param {Function} cb - Callback receiving the selected place string or null.
+ * Append items to a grouped combobox section based on type.
+ * @param {HTMLElement} groupEl
+ * @param {Array} data
+ * @param {string} type - "asset" or "harm"
  */
-export async function createPlaceElements(parentEl, cb) {
-  const data = await loadParquet('places.parquet');
-  const placeNames = data.map(d => d.name);
-  appendComboboxItems(parentEl, placeNames);
-  attachComboboxListener(parentEl, cb, { multi: false, normalize: true });
+function appendGroupedItems(groupEl, data, type) {
+  if (!groupEl) return;
+  const values = data.filter(d => d.type === type).map(d => d.value);
+  appendComboboxItems(groupEl, values);
 }
 
 /**
- * Creates and appends `<calcite-combobox-item>` elements grouped as harms/assets
- * based on data from `harms_assets.parquet`.
- *
- * @param {HTMLElement} parentEl - The `<calcite-combobox>` container.
- * @param {Function} cb - Callback receiving array of selected values or null.
+ * Creates and populates place selection items.
+ * @param {HTMLElement} comboboxEl
+ * @param {Function} callback - Receives a single normalized string or null.
+ * @param {string} filename - Optional Parquet file name
  */
-export async function createIndicatorElements(parentEl, cb) {
-  const data = await loadParquet('harms_assets.parquet');
+export async function createPlaceElements(comboboxEl, callback, filename = 'places.parquet') {
+  try {
+    const data = await loadParquet(filename);
+    const placeNames = data.map(d => d.name);
+    appendComboboxItems(comboboxEl, placeNames);
 
-  const harmsGroup = parentEl.querySelector('calcite-combobox-item-group[label="Harms"]');
-  const assetsGroup = parentEl.querySelector('calcite-combobox-item-group[label="Assets"]');
-
-  appendComboboxItems(assetsGroup, data.filter(d => d.type === 'asset').map(d => d.value));
-  appendComboboxItems(harmsGroup, data.filter(d => d.type === 'harm').map(d => d.value));
-
-  attachComboboxListener(parentEl, cb, { multi: true });
+    attachComboboxListener(comboboxEl, (values) => {
+      // Take first value and normalize
+      const normalized = values[0]?.replaceAll(/[ /]/g, "_").toLowerCase() || null;
+      callback(normalized);
+    });
+  } catch (err) {
+    console.error("Failed to create place elements:", err);
+  }
 }
 
+/**
+ * Creates and populates indicator items grouped by "Harms" and "Assets".
+ * @param {HTMLElement} comboboxEl
+ * @param {Function} callback - Receives an array of selected values or null.
+ * @param {string} filename - Optional Parquet file name
+ */
+export async function createIndicatorElements(comboboxEl, callback, filename = 'harms_assets.parquet') {
+  try {
+    const data = await loadParquet(filename);
+
+    const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]');
+    const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]');
+
+
+    appendGroupedItems(assetsGroup, data, 'asset');
+    appendGroupedItems(harmsGroup, data, 'harm');
+
+    attachComboboxListener(comboboxEl, (values) => {
+      callback(values.length ? values : null);
+    });
+  } catch (err) {
+    console.error("Failed to create indicator elements:", err);
+  }
+}
 
 /**
- * Attach a listener to a calcite-radio-button-group
- * @param {string|HTMLElement} selectorOrEl - ID selector or element
- * @param {Function} cb - Callback receiving selected value
+ * Attach a listener to a calcite-radio-button-group.
+ * @param {HTMLElement|string} radioGroupEl - Element or selector.
+ * @param {Function} callback - Receives selected value.
  */
-export function attachRadioListener(radioGroup, callback) {
-  if (!radioGroup) return; // safety check
+export function attachRadioListener(radioGroupEl, callback) {
+  const el = typeof radioGroupEl === 'string' ? document.getElementById(radioGroupEl) : radioGroupEl;
+  if (!el) return;
 
-  radioGroup.addEventListener("calciteRadioButtonGroupChange", () => {
-    const selectedValue = radioGroup.value;
-    callback(selectedValue);
+  el.addEventListener("calciteRadioButtonGroupChange", () => {
+    callback(el.value);
   });
 }
 
- export function attachHoverTooltip(view, hexLayer) {
-  let tooltip = document.getElementById("hover-tooltip");
-  let lastUpdate = 0;
-  const milliseconds = 30; // milliseconds
+/**
+ * Tooltip helper functions
+ */
+function showTooltip(tooltipEl, content, x, y) {
+  if (!tooltipEl) return;
+  tooltipEl.innerHTML = content;
+  tooltipEl.style.left = `${x}px`;
+  tooltipEl.style.top = `${y}px`;
+  tooltipEl.style.display = 'block';
+}
 
-  view.on("pointer-move", async (event) => {
-    const now = performance.now();
-    if (now - lastUpdate < milliseconds) return; // skip if within throttle window
-    lastUpdate = now;
+function hideTooltip(tooltipEl) {
+  if (tooltipEl) tooltipEl.style.display = 'none';
+}
 
+/**
+ * Attach a hover tooltip to a map view for a hex layer.
+ * @param {Object} view - Map view object
+ * @param {Object} hexLayer - Layer containing hex graphics
+ */
+export function attachHoverTooltip(view, hexLayer) {
+  const tooltip = document.getElementById("hover-tooltip");
+  if (!tooltip) return;
+
+  let scheduled = false;
+
+  async function updateTooltip(event) {
     const response = await view.hitTest(event, { include: hexLayer });
     if (response.results.length) {
       const hitGraphic = response.results[0].graphic;
@@ -125,21 +142,27 @@ export function attachRadioListener(radioGroup, callback) {
 
       if (originalGraphic) {
         const attrs = originalGraphic.attributes;
-        tooltip.innerHTML = `
-          <div><strong>Harms:</strong> ${attrs.final_value_harms}</div>
-          <div><strong>Assets:</strong> ${attrs.final_value_assets}</div>
-        `;
-        tooltip.style.left = event.x + -50 + "px";
-        tooltip.style.top = event.y + 200 + "px";
-        tooltip.style.display = "block";
+        showTooltip(
+          tooltip,
+          `<div><strong>Harms:</strong> ${attrs.final_value_harms}</div>
+           <div><strong>Assets:</strong> ${attrs.final_value_assets}</div>`,
+          event.x - 50,
+          event.y + 200
+        );
       }
     } else {
-      tooltip.style.display = "none";
+      hideTooltip(tooltip);
     }
+  }
+
+  view.on("pointer-move", (event) => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(async () => {
+      scheduled = false;
+      await updateTooltip(event);
+    });
   });
 
-  view.on("pointer-leave", () => {
-    const tooltip = document.getElementById("hover-tooltip");
-    if (tooltip) tooltip.style.display = "none";
-  });
+  view.on("pointer-leave", () => hideTooltip(tooltip));
 }
