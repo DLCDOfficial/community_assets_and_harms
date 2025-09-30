@@ -171,7 +171,14 @@ export function clearCity() {
   hexLayer = null;
   hexStore = null;
   cityFile = null;
+    // reset map viewpoint
+
+   view.goTo({
+    center: [-120.5, 44.0], // [longitude, latitude]
+    zoom: 6            // replace with your original zoom level
+  });
 }
+
 
 /** Refresh the hex layer by recalculating values based on current indicators and region.
  */
