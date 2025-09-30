@@ -18,9 +18,7 @@ function assignBin(value, thresholds) {
 }
 
 
-//placeholder thresholds, I think econorthwest might have calculated dynamic thresholds?
-// I've tried calculating dynamic thresholds (from both individual parameters, and averages for harms/assets 
-// but the map looks closest to the example with these static thresholds)
+//standard thresholds. We could change these if we wanted. 
 
 const fixed_thresholds = {q1:.25,q2:.5,q3:.75};
 
@@ -36,64 +34,49 @@ const fixed_thresholds = {q1:.25,q2:.5,q3:.75};
  * 
  * @returns {{avg_harms: number, avg_assets: number, quartile_string: string}} avg_harms, avg_assets, and a quartile_string like "1,3" that informs the rendering of the map.
  */
-const calculateValue = (field = 'ugb_pct_rank', rows = [{
-    "grid_id": "8928f00362bffff",
-    "value": 0.9969179034233093,
-    "var": "earthquake_liquid",
-    "directionality": 1,
-    "instName": "Portland",
-    "region": "Metro",
-    "ugb_pct_rank": 0.0,
-    "region_pct_rank": 0.17423281073570251,
-    "st_pct_rank": 0.3077784776687622,
-    "type": "harm"
-}]) => {
-    
-  // Calculate average values for harms and assets
-  //dynamic variable for division in case some entry is missing a harm/asset
-    let harmsValue = 0;
-    let assetsValue = 0;
-    
-    let harmsCount = 0;
-    let assetsCount = 0;
+const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
+  //total harms/assets values (numerator for averaging)
+  let totalHarms = 0;
+  let totalAssets = 0;
 
-    let displayString = '';
-    rows.forEach((row) => {
-        if (["tsunami_zone", "highway", "electric_transmission_lines"].includes(row.var)) {
-    return; // skip this iteration
+  //number of harms/assets counted (denominator for averaging)
+  let countHarms = 0;
+  let countAssets = 0;
+
+  //string to display in popup
+  let displayString = '';
+
+  //iterate through each row of data for this hex
+  rows.forEach(row => {
+    //skip if this variable is not in the selected indicators set
+    if (!indicator_set.has(row.var)) return;
+
+    const value = row[field];
+    const quartileValue = assignBin(value, fixed_thresholds);
+    displayString += `${row.var}: ${quartileValue} (${row.type})<br>`;
+
+    if (row.type === 'harm') {
+      totalHarms += value;
+      countHarms += 1;
+    } else {
+      totalAssets += value;
+      countAssets += 1;
     }
+  });
 
+  const avgHarms = countHarms > 0 ? totalHarms / countHarms : 0;
+  const avgAssets = countAssets > 0 ? totalAssets / countAssets : 0;
 
+  // create the quartile string for rendering
+  // based on what percentile bin the average harms and assets fall into
+  const quartile_string = `${assignBin(avgAssets, fixed_thresholds)},${assignBin(avgHarms, fixed_thresholds)}`;
 
-        if (row.type==='harm') {
-            const quartileValue = assignBin(row[field], fixed_thresholds);
-            harmsValue +=  row[field];
-            harmsCount += 1;
-            displayString += `${row.var}: ${quartileValue} (${row.type})<br>`;
-
-        } else {
-            const quartileValue = assignBin(row[field], fixed_thresholds);
-            assetsValue += row[field];
-            assetsCount += 1;
-            displayString += `${row.var}: ${quartileValue} (${row.type})<br>`;
-
-        }
-    
-
-});
-    const avg_harms = (harmsValue / harmsCount);
-    const avg_assets = (assetsValue / assetsCount);
-
-    // console.log(`Avg Harms: ${avg_harms}, Avg Assets: ${avg_assets}`);
-
-    const quartile_string = `${assignBin(avg_assets, fixed_thresholds)},${assignBin(avg_harms, fixed_thresholds)}`;
-    
-    return {
-    avg_harms,
-    avg_assets,
+  return {
+    avg_harms: avgHarms,
+    avg_assets: avgAssets,
     quartile_string,
     displayString
-    };
+  };
 };
 
 export { calculateValue };

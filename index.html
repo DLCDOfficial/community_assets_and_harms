@@ -16,7 +16,8 @@
       <div id="filters" class="filters-container">
         <div id="indicators-filter">
           <h2>Indicators</h2>
-          <calcite-combobox id="indicator-combobox" placeholder="Indicators">
+          <calcite-combobox id="indicator-combobox" placeholder="Indicators" selection-mode="multiple"
+  selected-items-label="single">
             <!-- Populate with indicators -->
           <calcite-combobox-item-group label ="Assets">
           </calcite-combobox-item-group>
@@ -31,24 +32,35 @@
             <!-- Populate with place names -->
           </calcite-combobox> 
         </div>
-        <div id="comparison-region">
+        <div id="comparison-region"> 
           <h2>Comparison Region</h2>
           <calcite-radio-button-group name="Options" layout="horizontal">
             <calcite-label layout="inline">
-                <calcite-radio-button value="UGB" checked></calcite-radio-button>
+                <calcite-radio-button value="ugb_pct_rank" checked></calcite-radio-button>
                 UGB
             </calcite-label>
             <calcite-label layout="inline">
-                <calcite-radio-button value="Region"></calcite-radio-button>
+                <calcite-radio-button value="region_pct_rank"></calcite-radio-button>
                 Region
             </calcite-label>
             <calcite-label layout="inline">
-                <calcite-radio-button value="State"></calcite-radio-button>
+                <calcite-radio-button value="st_pct_rank"></calcite-radio-button>
                 State
             </calcite-label>
         </calcite-radio-button-group>
         </div>
       </div>
+
+      <div id="hover-tooltip" style="
+      position: absolute;
+      pointer-events: none;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: none;
+      z-index: 1000;"></div>
 
       
       <!-- Main Row (map) -->

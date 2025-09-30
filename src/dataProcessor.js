@@ -5,37 +5,41 @@
 import { snappyUncompressor } from 'hysnappy';
 
 /**
- * Load and process H3 hex data from a Parquet file.
+ * Load and parse a Parquet file.
+ * Low-level function, returns raw data.
  *
- * @param {string} parquetFile - The filename (relative to VITE_PATH) of the Parquet file to load.
- * @returns {Promise<{ hexStore: Object<string, Object[]>, uniqueHexes: string[] }>}
- *   hexStore: An object where hex_id is the key, which is mapped to an array of records (all harms/assets for a hex_id )
- *   uniqueHexes: Array of unique hex IDs (keys of hexStore).
+ * @param {string} filename - Parquet file path relative to VITE_PATH.
+ * @returns {Promise<Array<object>>} Parsed parquet data.
  */
-export async function loadHexData(parquetFile) {
+export async function loadParquet(filename) {
   const { asyncBufferFromUrl, parquetQuery } = await import('hyparquet');
-
-  console.log("ENV::", import.meta.env);
   const prefix = import.meta.env.VITE_PATH;
-  const file = await asyncBufferFromUrl({ url: `${prefix}/${parquetFile}` });
+  const file = await asyncBufferFromUrl({ url: `${prefix}/${filename}` });
 
-  // Read parquet file contents
-  const _data = await parquetQuery({
+  return parquetQuery({
     file,
     compressors: { SNAPPY: snappyUncompressor() }
   });
+}
 
-  // Build hexStore keyed by grid_id
+/**
+ * Load and structure hex grid data from a Parquet file.
+ * Builds a hexStore keyed by 'grid_id' and a list of unique hex IDs.
+ *
+ * @param {string} parquetFile - Parquet file path relative to VITE_PATH.
+ * @returns {Promise<{hexStore: Record<string, object[]>, uniqueHexes: string[]}>}
+ */
+export async function loadHexData(parquetFile) {
+  const data = await loadParquet(parquetFile);
+
   const hexStore = {};
- 
-  _data.forEach(d => {
+  data.forEach(d => {
     const id = d['grid_id'];
-    
     if (!hexStore[id]) hexStore[id] = [];
     hexStore[id].push(d);
   });
 
   const uniqueHexes = Object.keys(hexStore);
 
-  return { hexStore, uniqueHexes};
+  return { hexStore, uniqueHexes };
 }
