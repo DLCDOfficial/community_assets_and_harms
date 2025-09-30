@@ -54,7 +54,7 @@ export function createHexLayer(uniqueHexes, map) {
     popupTemplate: {
       outFields: ['*'],
       content: (feature) =>
-        `${feature.graphic.attributes.displayString}, ${feature.graphic.attributes.compositeKey}, ${feature.graphic.attributes.final_value_assets}, ${feature.graphic.attributes.final_value_harms}`
+        `${feature.graphic.attributes.displayString}`
     },
     fields: [
       { name: "grid_id", type: "oid" },
@@ -82,6 +82,9 @@ export function createHexLayer(uniqueHexes, map) {
 export async function updateHexValues(hexLayer, hexStore, userOptions) {
   const { indicators_set, region } = userOptions;
   const results = await hexLayer.queryFeatures();
+
+  const hexValuesMap = {}; // to store calculated values for each hex
+  // so we can update the in-memory graphics for hover tooltip without recalling calculateValue
   const edits = results.features.map(feature => {
     const hexId = feature.getAttribute('hex_id');
     const values = calculateValue(region, hexStore[hexId], indicators_set);
@@ -90,7 +93,7 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
     feature.setAttribute('final_value_assets', values.avg_assets);
     feature.setAttribute('compositeKey', values.quartile_string);
     feature.setAttribute('displayString', values.displayString);
-
+    hexValuesMap[hexId] = values; // save for later
     return feature;
   });
 
@@ -101,7 +104,7 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
   hexLayer.source.items.forEach(graphic => {
     const hexId = graphic.attributes.hex_id;
     if (hexStore[hexId]) {
-      const values = calculateValue(region, hexStore[hexId], indicators_set);
+      const values = hexValuesMap[hexId];
       graphic.attributes.final_value_harms = values.avg_harms;
       graphic.attributes.final_value_assets = values.avg_assets;
       graphic.attributes.compositeKey = values.quartile_string;

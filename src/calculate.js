@@ -17,11 +17,51 @@ function assignBin(value, thresholds) {
   return 4;
 }
 
+/**
+ * 
+ * @param {int} bin // the bin number (1-4)
+ * @param {*} percentage_strings // an object mapping bin numbers to percentile strings, e.g. {1: "0-25%", 2: "25-50%", 3: "50-75%", 4: "75-100%"}
+ * @returns  {string|null} the corresponding percentile string, or null if bin is out of range
+ */
+function getPercentileFromBin(bin, percentage_strings) {
+  switch (bin) {
+    case 1:
+      return percentage_strings[1];
+    case 2:
+      return percentage_strings[2];
+    case 3:
+      return percentage_strings[3];
+    case 4:
+      return percentage_strings[4]; // max percentile
+    default:
+      return null;
+  }}
+
 
 //standard thresholds. We could change these if we wanted. 
 
+const percentage_strings = { 1: "0-25%", 2: "25-50%", 3: "50-75%", 4: "75-100%" };
+
+
 const fixed_thresholds = {q1:.25,q2:.5,q3:.75};
 
+
+function appendDisplayString(bin, displayStringObject, newString) {
+  switch (bin) {
+    case 1:
+      displayStringObject[1] += newString
+      break;
+    case 2:
+      displayStringObject[2] += newString
+      break;
+    case 3:
+      displayStringObject[3] += newString
+      break;
+    case 4:
+      displayStringObject[4] += newString
+      break;
+    default:
+      break;} }
 
 
 /**
@@ -42,6 +82,7 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
   //number of harms/assets counted (denominator for averaging)
   let countHarms = 0;
   let countAssets = 0;
+  let displayStringObject = {1: '', 2: '', 3: '', 4: ''};
 
   //string to display in popup
   let displayString = '';
@@ -53,7 +94,13 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
 
     const value = row[field];
     const quartileValue = assignBin(value, fixed_thresholds);
-    displayString += `${row.var}: ${quartileValue} (${row.type})<br>`;
+
+    const percentageRange = getPercentileFromBin(quartileValue, percentage_strings);
+      
+    
+    let currentString = `${row.var}: ${percentageRange} <br>`;
+    appendDisplayString(quartileValue, displayStringObject, currentString);
+
 
     if (row.type === 'harm') {
       totalHarms += value;
@@ -64,16 +111,40 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
     }
   });
 
+
+  // build the display string by concatenating in order of bins (4,3,2,1)
+  // this ensures that higher percentile variables appear first in the popup
+
+  // e.g. if a hex has one variable in the 75-100% bin and two in the 0-25% bin,
+  // we want the 75-100% variable to appear first in the popup
+
+ //sort ensures order is always 4,3,2,1
+ //then we are checking if there is any string for that bin
+ //if so, we append it to the displayString
+  Object.keys(displayStringObject).sort((a, b) => b - a).forEach(bin => {
+    
+    if (displayStringObject[bin] !== '') {
+      displayString += displayStringObject[bin];
+      displayStringObject[bin] = '';
+    }
+  });
+
   const avgHarms = countHarms > 0 ? totalHarms / countHarms : 0;
   const avgAssets = countAssets > 0 ? totalAssets / countAssets : 0;
+
+  const harmsBin = assignBin(avgHarms, fixed_thresholds);
+  const assetsBin = assignBin(avgAssets, fixed_thresholds);
+
+  const harmsRange = getPercentileFromBin(harmsBin, percentage_strings);
+  const assetsRange = getPercentileFromBin(assetsBin, percentage_strings);
 
   // create the quartile string for rendering
   // based on what percentile bin the average harms and assets fall into
   const quartile_string = `${assignBin(avgAssets, fixed_thresholds)},${assignBin(avgHarms, fixed_thresholds)}`;
 
   return {
-    avg_harms: avgHarms,
-    avg_assets: avgAssets,
+    avg_harms: harmsRange,
+    avg_assets: assetsRange,
     quartile_string,
     displayString
   };
