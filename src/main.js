@@ -5,8 +5,10 @@ import {
   loadCity, 
   clearCity, 
   setIndicators, 
-  setRegion 
+  setRegion,
+  toggleLayer
 } from './mapHandler.js';
+
 
 import { 
   createPlaceElements, 
@@ -52,3 +54,14 @@ createPlaceElements(placeCombo, (selectedPlace) => {
 attachRadioListener(radioGroup, () => {
   setRegion(radioGroup.selectedItem.value);
 });
+
+// ------------------ Layer Checkbox Controls ------------------
+["tsunami_zone","electric_transmission_lines","highway"].forEach(layerName => {
+  const checkbox = document.getElementById(layerName);
+  if (checkbox) {
+    checkbox.addEventListener("change", (e) => {
+      toggleLayer(layerName, e.target.checked);
+    });
+  }
+});
+

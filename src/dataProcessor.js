@@ -32,14 +32,27 @@ export async function loadParquet(filename) {
 export async function loadHexData(parquetFile) {
   const data = await loadParquet(parquetFile);
 
+  const flags_data = {electric_transmission_lines: [],highway: [],tsunami_zone: []}
   const hexStore = {};
   data.forEach(d => {
     const id = d['grid_id'];
-    if (!hexStore[id]) hexStore[id] = [];
+
+    const data_value = d['value'];
+    const data_type = d['type'];
+    if (data_type === 'flag' && data_value != 0) {
+      console.log("FLAG!")
+      const data_var= d['var'];
+      console.log(data_var);
+      flags_data[data_var].push(id);
+    }
+    if (!hexStore[id]) {
+      hexStore[id] = [];
+    }
     hexStore[id].push(d);
+    
   });
 
   const uniqueHexes = Object.keys(hexStore);
 
-  return { hexStore, uniqueHexes };
+  return { hexStore, uniqueHexes, flags_data };
 }

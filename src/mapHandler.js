@@ -1,6 +1,8 @@
 // mapHandler.js
 import Graphic from "@arcgis/core/Graphic.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
+
 import { cellToBoundary } from "h3-js";
 import { generateRenderer } from './renderer.js';
 import { calculateValue } from './calculate.js';
@@ -15,9 +17,12 @@ import "@arcgis/map-components/components/arcgis-search";
 let view = null;
 let hexLayer = null;
 let hexStore = null;
+let screenerLayers = {};
 let cityFile = null;
 let indicators = null;
 let region = 'ugb_pct_rank';
+
+let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1]};
 
 // ------------------ Hex Layer Utilities ------------------
 
@@ -29,10 +34,7 @@ let region = 'ugb_pct_rank';
  * @returns  {FeatureLayer}
  */
 export function createHexLayer(uniqueHexes, map) {
-  if (map) {
-    const layersToRemove = map.layers.filter(layer => layer instanceof FeatureLayer);
-    layersToRemove.forEach(layer => map.layers.remove(layer));
-  }
+ 
 
   const graphics = uniqueHexes.map(hex => {
     const polygon = { type: "polygon", rings: cellToBoundary(hex, true) };
@@ -69,6 +71,44 @@ export function createHexLayer(uniqueHexes, map) {
   });
 }
 
+
+
+/**
+ * Adds an array of H3 hex IDs to a map as outlined hexes.
+ * @param {Map} map - The ArcGIS Map object.
+ * @param {string[]} hexIds - Array of H3 hex IDs.
+ */
+function addHexOutlinesToMap(map, screenerInfo) {
+  const { hexIds, color, layerName } = screenerInfo;
+  const hexGraphics = hexIds.map(hexId => {
+    const boundary = cellToBoundary(hexId, true); // true = GeoJSON [lng, lat]
+
+    return new Graphic({
+      geometry: {
+        type: "polygon",
+        rings: boundary.map(([lng, lat]) => [lng, lat]),
+        spatialReference: { wkid: 4326 }
+      },
+      symbol: {
+        type: "simple-fill",
+        color: [0, 0, 0, 0],       // Transparent fill
+        outline: {
+          color: color,  // Red outline [255, 0, 0, 1]
+          width: 1
+        }
+      }
+    });
+  });
+
+  const layer = new GraphicsLayer({
+    graphics: hexGraphics,
+    visible: false
+  });
+
+  map.add(layer);
+  console.log("Added screener layer:", layerName);
+  screenerLayers[layerName] = layer;
+}
 /**
  * Update hex layer attributes based on calculations from hexStore and user options.
  * @param {FeatureLayer} hexLayer 
@@ -147,13 +187,18 @@ export function setRegion(selectedRegion) {
  * @param {string} fileName - The name of the Parquet file to load.
  */
 
+
 export async function loadCity(fileName) {
   cityFile = fileName;
-  const { hexStore: newHexStore, uniqueHexes } = await loadHexData(fileName);
+  const { hexStore: newHexStore, uniqueHexes, flags_data } = await loadHexData(fileName);
 
-  if (hexLayer) view.map.layers.remove(hexLayer);
+  if (view.map) {
+    clearAllLayers();
+  }
 
   hexLayer = createHexLayer(uniqueHexes, view.map);
+
+ 
   hexStore = newHexStore;
 
   view.map.add(hexLayer);
@@ -161,17 +206,20 @@ export async function loadCity(fileName) {
 
   refreshHexLayer();
   attachHoverTooltip(view, hexLayer);
+   for (const flag in flags_data) {
+    if (flags_data[flag].length > 0) {
+      addHexOutlinesToMap(view.map, {hexIds: flags_data[flag], color: colors[flag], layerName: flag} );
+    }
+  }
+
+  
 }
 
 /** Clear the current city data and remove the hex layer from the map.
  */
 
 export function clearCity() {
-  if (hexLayer) view.map.layers.remove(hexLayer);
-  hexLayer = null;
-  hexStore = null;
-  cityFile = null;
-    // reset map viewpoint
+  clearAllLayers();
 
    view.goTo({
     center: [-120.5, 44.0], // [longitude, latitude]
@@ -187,4 +235,34 @@ function refreshHexLayer() {
   if (!hexLayer || !hexStore || !indicators) return;
   const userOptions = { indicators_set: new Set(indicators), region };
   updateHexValues(hexLayer, hexStore, userOptions);
+}
+
+
+function clearAllLayers() {
+  if (hexLayer) view.map.layers.remove(hexLayer);
+  if (screenerLayers) {
+    for (const layer in screenerLayers) {
+      view.map.layers.remove(screenerLayers[layer]);  }
+    }
+  hexLayer = null;
+  hexStore = null;
+  screenerLayers = {};
+  cityFile = null;
+}
+
+/**
+ * Toggle visibility of a stored layer.
+ * @param {string} layerName - The name of the layer to toggle.
+ * @param {boolean} visible - true = show, false = hide
+ */
+export function toggleLayer(layerName, visible = true) {
+  console.log("Toggling layer:", layerName, "to", visible);
+  console.log(screenerLayers);
+  const layer = screenerLayers[layerName]; // hexLayers is your object storing layer references
+  if (layer) {
+    console.log(`Toggling layer "${layerName}" to ${visible}`);
+    layer.visible = visible;
+  } else {
+    console.warn(`Layer "${layerName}" not found.`);
+  }
 }
