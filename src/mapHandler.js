@@ -18,6 +18,7 @@ let view = null;
 let hexLayer = null;
 let hexStore = null;
 let screenerLayers = {};
+let highlightedCell = null;
 let cityFile = null;
 let indicators = null;
 let region = 'ugb_pct_rank';
@@ -160,7 +161,37 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
 /** Initialize map handler with the map view.
  * @param {Object} mapView - The map view object.
  */
-export function initMapHandler(mapView) { view = mapView; }
+export function initMapHandler(mapView) { view = mapView; 
+  // Add click handler for hexes
+  view.on("click", async (event) => {
+    const response = await view.hitTest(event);
+
+  if (highlightedCell) {
+    highlightedCell.style.border = ''
+
+
+  }
+    
+    // Filter for  hex layer only
+    const results = response.results.filter(r => r.graphic.layer === hexLayer);
+    
+    if (results.length > 0) {
+      const graphic = results[0].graphic;
+      const hexId = graphic.attributes.hex_id;
+      const rendererString = graphic.attributes.compositeKey;
+      
+      console.log("Hex clicked:", rendererString);
+
+     const legend_div = document.getElementById(rendererString)
+     console.log(legend_div)
+
+     legend_div.style.border = "3px solid yellow";  
+     highlightedCell =legend_div    
+
+    }
+  });
+}
+
 
 //getters and setters for state variables
 
@@ -238,6 +269,9 @@ function refreshHexLayer() {
 }
 
 
+/** 
+ *  Clear all layers that have been added to a map.
+ */
 function clearAllLayers() {
   if (hexLayer) view.map.layers.remove(hexLayer);
   if (screenerLayers) {
