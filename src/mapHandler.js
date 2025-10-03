@@ -55,6 +55,7 @@ export function createHexLayer(uniqueHexes, map) {
     objectIdField: 'grid_id',
     popupEnabled: true,
     popupTemplate: {
+      
       outFields: ['*'],
       content: (feature) =>
         `${feature.graphic.attributes.displayString}`
@@ -162,6 +163,15 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
  * @param {Object} mapView - The map view object.
  */
 export function initMapHandler(mapView) { view = mapView; 
+
+    // Configure popup so it never goes offscreen
+  view.popup.dockEnabled = true;
+  view.popup.dockOptions = {
+    buttonEnabled: false,
+    breakpoint: false,
+  };
+  view.popup.maxHeight = 200; // optional: makes tall content scrollable
+
   // Add click handler for hexes
   view.on("click", async (event) => {
     const response = await view.hitTest(event);
