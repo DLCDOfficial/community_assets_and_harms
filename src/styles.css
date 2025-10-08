@@ -5,19 +5,8 @@
 html,
 body {
   background-color: var(--calcite-ui-foreground-2);
-  height: 100%;
   margin: 0;
-}
-
-.filters-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-#main {
-  height: 500px;
+  padding: 0;
 }
 
 arcgis-map {
@@ -25,15 +14,22 @@ arcgis-map {
   height: 100%;
 }
 
-#options {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  z-index: 99;
-  background: white;
-  padding: 10px;
-}
-
 .options-list > li {
   cursor: pointer;
+}
+
+#place-combobox {
+  z-index: 9999;
+}
+
+#hover-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: none;
+  z-index: 1000;
 }

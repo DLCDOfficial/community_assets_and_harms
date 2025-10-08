@@ -1,152 +1,157 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Uber H3 Playground</title>
-    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.0/calcite.esm.js"></script>
-  </head>
-  <body>
-    <div>
-      <!-- Header Row -->
-      <div id="header">
-        <h1 class="title">Community Assets & Harms Mapping Tool</h1>
-      </div>
-      <!-- Filters Row -->
-      <div id="filters" class="filters-container">
-        <div id="indicators-filter">
-          <h2>Indicators</h2>
-          <calcite-combobox id="indicator-combobox" placeholder="Indicators" selection-mode="multiple"
-  selected-items-label="single" style="z-index: 1000;">
-            <!-- Populate with indicators -->
-          <calcite-combobox-item-group label ="Assets">
-          </calcite-combobox-item-group>
-          <calcite-combobox-item-group label ="Harms">
-          </calcite-combobox-item-group>
-          </calcite-combobox>
-        </div>
-        <div id="place-filter">
-          <h2>Place</h2>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assets & Harms</title>
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.0/calcite.esm.js"></script>
+</head>
+
+<body>
+  <calcite-shell>
+    <!-- HEADER WITH LOGO -->
+    <calcite-navigation slot="header">
+      <calcite-navigation-logo slot="logo" heading="Community Assets & Harms Mapping Tool"
+        thumbnail="https://raw.githubusercontent.com/DLCDOfficial/dlcd-logos/refs/heads/main/DLCD_logo_only.png"></calcite-navigation-logo>
+    </calcite-navigation>
+
+    <!-- SIDE PANEL CONTROLS -->
+    <calcite-shell-panel slot="panel-start" position="start" id="shell-panel-start">
+      <calcite-action-bar slot="action-bar" expanded>
+        <calcite-action-group>
+          <calcite-action active text="Configure" icon="configure" text-enabled></calcite-action>
+        </calcite-action-group>
+        <calcite-action-group slot="bottom-actions">
+          <calcite-action text="About" icon="information" text-enabled></calcite-action>
+        </calcite-action-group>
+      </calcite-action-bar>
+
+      <calcite-panel heading="Configure" id="panel-start">
+        <calcite-block heading="Place" description="Select a UGB" icon-start="h3-hexagon" expanded>
           <calcite-combobox id="place-combobox" placeholder="Select a UGB" selection-mode="single">
-            <!-- <calcite-combobox-item value="Natural Resources" heading="Natural Resources"></calcite-combobox-item> -->
             <!-- Populate with place names -->
-          </calcite-combobox> 
-        </div>
-        <div id="comparison-region"> 
-          <h2>Comparison Region</h2>
-          <calcite-radio-button-group name="Options" layout="horizontal">
-            <calcite-label layout="inline">
+          </calcite-combobox>
+        </calcite-block>
+        <calcite-block collapsible heading="Indicators" description="Select Harms & Assets" icon-start="effects" expanded>
+          <calcite-combobox id="indicator-combobox" placeholder="Indicators" selection-mode="multiple"
+            selected-items-label="single" style="z-index: 1000;">
+            <!-- Populate with indicators -->
+            <calcite-combobox-item-group label="Assets"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Harms"></calcite-combobox-item-group>
+          </calcite-combobox>
+        </calcite-block>
+        <calcite-block collapsible heading="Screeners" description="Select Screener Overlays" icon-start="map-pin" expanded>
+          <div id="layer-controls">
+            <label><input type="checkbox" id="tsunami_zone" unchecked> Tsunami Zone</label><br>
+            <label><input type="checkbox" id="highway" unchecked> Highway</label><br>
+            <label><input type="checkbox" id="electric_transmission_lines" unchecked> Electric Transmission
+              Lines</label>
+          </div>
+        </calcite-block>
+        <calcite-block collapsible heading="Comparison" description="Select Comparison Region" icon-start="compare" expanded>
+          <div id="comparison-region">
+            <calcite-radio-button-group name="Options" layout="horizontal">
+              <calcite-label layout="inline">
                 <calcite-radio-button value="ugb_pct_rank" checked></calcite-radio-button>
                 UGB
-            </calcite-label>
-            <calcite-label layout="inline">
+              </calcite-label>
+              <calcite-label layout="inline">
                 <calcite-radio-button value="region_pct_rank"></calcite-radio-button>
                 Region
-            </calcite-label>
-            <calcite-label layout="inline">
+              </calcite-label>
+              <calcite-label layout="inline">
                 <calcite-radio-button value="st_pct_rank"></calcite-radio-button>
                 State
-            </calcite-label>
-        </calcite-radio-button-group>
-        </div>
-      </div>
+              </calcite-label>
+            </calcite-radio-button-group>
+          </div>
+        </calcite-block>
+      </calcite-panel>
+    </calcite-shell-panel>
 
-      <div id="hover-tooltip" style="
-      position: absolute;
-      pointer-events: none;
-      background: rgba(0,0,0,0.75);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      display: none;
-      z-index: 1000;"></div>
+    </calcite-shell-panel>
+    <!-- MAIN CONTENT (MAP) -->
+    <calcite-panel>
+      <arcgis-map basemap="gray-vector" center="-120.70, 44.12" zoom="6">
+        <arcgis-zoom position="top-right"></arcgis-zoom>
+    </calcite-panel>
+  </calcite-shell>
 
+  <!-- CUSTOM LEGEND TO INJECT INTO MAP UI-->
+  <div id="legend-container" style="background:white; padding:20px; z-index:100; display: none">
+    <!-- Main Title -->
 
-      <div id="legend-container" style="position:absolute; bottom:100px; right:1200px; background:white; padding:20px; z-index:100;"> 
-  <!-- Main Title -->
-
-  <!-- Grid Container -->
-  <div style="display:grid; 
+    <!-- Grid Container -->
+    <div style="display:grid; 
               grid-template-columns: 50px repeat(4, 50px); 
               grid-template-rows: repeat(4, 50px) 20px; 
               gap:2px; 
               position:relative;">
 
-    <!-- Y axis label -->
-    <div style="position:absolute; left:5px; top:50px; writing-mode: vertical-rl; font-weight:bold; text-align:center;">
-      Higher Assets ↑
-    </div>
-
-    <!-- Percentage labels y direction -->
-    <div style="grid-row:1; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">75-100%</div>
-    <div style="grid-row:2; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">50-75%</div>
-    <div style="grid-row:3; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">25-50%</div>
-    <div style="grid-row:4; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">0-25%</div>
-
-    <!-- Color matrix cells -->
-    <!-- Rows are reversed from how they are represented in the renderer strings.. 4 = 1-->
-    <!-- Row 1 -->
-    <div id="4,1" style="grid-row:1; grid-column:2; background:#169dd0;"></div>
-    <div id="4,2" style="grid-row:1; grid-column:3; background:#16869e;"></div>
-    <div id="4,3" style="grid-row:1; grid-column:4; background:#166d68;"></div>
-    <div id="4,4" style="grid-row:1; grid-column:5; background:#174f28;"></div>
-
-    <!-- Row 2 -->
-    <div id= "3,1" style="grid-row:2; grid-column:2; background:#5fb2d1;"></div>
-    <div id = "3,2" style="grid-row:2; grid-column:3; background:#60979f;"></div>
-    <div id = "3,3" style="grid-row:2; grid-column:4; background:#617b69;"></div>
-    <div id = "3,4" style="grid-row:2; grid-column:5; background:#635929;"></div>
-
-    <!-- Row 3 -->
-    <div id ="2,1" style="grid-row:3; grid-column:2; background:#9cc4d2;"></div>
-    <div id = "2,2" style="grid-row:3; grid-column:3; background:#9ea69f;"></div>
-    <div id ="2,3" style="grid-row:3; grid-column:4; background:#a08769;"></div>
-    <div id = "2,4" style="grid-row:3; grid-column:5; background:#a36229;"></div>
-
-    <!-- Row 4 -->
-    <div id= "1,1" style="grid-row:4; grid-column:2; background:#d3d3d3;"></div>
-    <div id= "1,2" style= "grid-row:4; grid-column:3; background:#d6b3a0;"></div>
-    <div id ="1,3" style="grid-row:4; grid-column:4; background:#d9926a;"></div>
-    <div id ="1,4" style="grid-row:4; grid-column:5; background:#dd6a29;"></div>
-
-    <!-- Percentage labels x direction -->
-    <div style="grid-row:5; grid-column:2; text-align:center; font-size:10px;">0-25%</div>
-    <div style="grid-row:5; grid-column:3; text-align:center; font-size:10px;">25-50%</div>
-    <div style="grid-row:5; grid-column:4; text-align:center; font-size:10px;">50-75%</div>
-    <div style="grid-row:5; grid-column:5; text-align:center; font-size:10px;">75-100%</div>
-
-    <!-- Large X Axis Label -->
-    <div style="grid-row:6; grid-column:2/6; text-align:center; font-weight:bold;">
-      Higher Harms →
-    </div>
-
-  </div>
-</div>
-
-      
-      <!-- Main Row (map) -->
-      <div id="main">
-        <arcgis-map  basemap="streets-navigation-vector" center="-122.6687, 45.5003" zoom="12">
-          <arcgis-zoom position="top-left"></arcgis-zoom>
-          <arcgis-search position="top-right"></arcgis-search>
-          <!--<arcgis-legend position="bottom-left"></arcgis-legend> -->
-          <div id="layer-controls" style="
-          position:absolute;       
-          top:275px;                
-          left:50px;               
-          z-index:99;              
-          background:white;        
-          padding:8px;           
-          border-radius:4px;       
-      ">
-        <label><input type="checkbox" id="tsunami_zone" unchecked> Tsunami Zone</label><br>
-        <label><input type="checkbox" id="highway" unchecked> Highway</label><br>
-        <label><input type="checkbox" id="electric_transmission_lines" unchecked> Electric Transmission Lines</label>
-        </div>
-        </arcgis-map>
+      <!-- Y axis label -->
+      <div
+        style="position:absolute; left:5px; top:50px; writing-mode: vertical-rl; font-weight:bold; text-align:center;">
+        Higher Assets ↑
       </div>
+
+      <!-- Percentage labels y direction -->
+      <div
+        style="grid-row:1; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">
+        75-100%</div>
+      <div
+        style="grid-row:2; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">
+        50-75%</div>
+      <div
+        style="grid-row:3; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">
+        25-50%</div>
+      <div
+        style="grid-row:4; grid-column:1; writing-mode: vertical-rl; text-align:center; font-size:10px; align-self:center;">
+        0-25%</div>
+
+      <!-- Color matrix cells -->
+      <!-- Rows are reversed from how they are represented in the renderer strings.. 4 = 1-->
+      <!-- Row 1 -->
+      <div id="4,1" style="grid-row:1; grid-column:2; background:#169dd0;"></div>
+      <div id="4,2" style="grid-row:1; grid-column:3; background:#16869e;"></div>
+      <div id="4,3" style="grid-row:1; grid-column:4; background:#166d68;"></div>
+      <div id="4,4" style="grid-row:1; grid-column:5; background:#174f28;"></div>
+
+      <!-- Row 2 -->
+      <div id="3,1" style="grid-row:2; grid-column:2; background:#5fb2d1;"></div>
+      <div id="3,2" style="grid-row:2; grid-column:3; background:#60979f;"></div>
+      <div id="3,3" style="grid-row:2; grid-column:4; background:#617b69;"></div>
+      <div id="3,4" style="grid-row:2; grid-column:5; background:#635929;"></div>
+
+      <!-- Row 3 -->
+      <div id="2,1" style="grid-row:3; grid-column:2; background:#9cc4d2;"></div>
+      <div id="2,2" style="grid-row:3; grid-column:3; background:#9ea69f;"></div>
+      <div id="2,3" style="grid-row:3; grid-column:4; background:#a08769;"></div>
+      <div id="2,4" style="grid-row:3; grid-column:5; background:#a36229;"></div>
+
+      <!-- Row 4 -->
+      <div id="1,1" style="grid-row:4; grid-column:2; background:#d3d3d3;"></div>
+      <div id="1,2" style="grid-row:4; grid-column:3; background:#d6b3a0;"></div>
+      <div id="1,3" style="grid-row:4; grid-column:4; background:#d9926a;"></div>
+      <div id="1,4" style="grid-row:4; grid-column:5; background:#dd6a29;"></div>
+
+      <!-- Percentage labels x direction -->
+      <div style="grid-row:5; grid-column:2; text-align:center; font-size:10px;">0-25%</div>
+      <div style="grid-row:5; grid-column:3; text-align:center; font-size:10px;">25-50%</div>
+      <div style="grid-row:5; grid-column:4; text-align:center; font-size:10px;">50-75%</div>
+      <div style="grid-row:5; grid-column:5; text-align:center; font-size:10px;">75-100%</div>
+
+      <!-- Large X Axis Label -->
+      <div style="grid-row:6; grid-column:2/6; text-align:center; font-weight:bold;">
+        Higher Harms →
+      </div>
+
     </div>
-    <script type="module" src="./src/main.js"></script>
-  </body>
+  </div>
+
+
+  <div id="hover-tooltip"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+
 </html>

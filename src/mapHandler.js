@@ -53,6 +53,7 @@ export function createHexLayer(uniqueHexes, map) {
 
   return new FeatureLayer({
     objectIdField: 'grid_id',
+    opacity: 0.85,
     popupEnabled: true,
     popupTemplate: {
       
@@ -177,9 +178,7 @@ export function initMapHandler(mapView) { view = mapView;
     const response = await view.hitTest(event);
 
   if (highlightedCell) {
-    highlightedCell.style.border = ''
-
-
+    highlightedCell.style.border = '';
   }
     
     // Filter for  hex layer only

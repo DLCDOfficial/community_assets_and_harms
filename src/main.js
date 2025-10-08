@@ -31,6 +31,10 @@ const view = mapComponent.view;
 // ------------------ Initialize Map ------------------
 initMapHandler(view);
 
+const legendEl = document.getElementById('legend-container');
+view.ui.add(legendEl, "bottom-left");
+legendEl.style.display = "block";
+
 // ------------------ Indicator Dropdown ------------------
 createIndicatorElements(indicatorCombo, (selectedIndicators) => {
   setIndicators(selectedIndicators);
