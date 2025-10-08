@@ -1,5 +1,6 @@
 // this file contains functions to calculate quartiles and assign bins
 // as well as the main calculation function that returns a string to inform the rendering of the map
+import { formatHeader } from './htmlHelpers.js';
 
 /**
  * assign a bin (1-4) for a value based on provided thresholds
@@ -97,8 +98,8 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
 
     const percentageRange = getPercentileFromBin(quartileValue, percentage_strings);
       
-    
-    let currentString = `${row.var}: ${percentageRange} <br>`;
+    const formatted_var = formatHeader(row.var)
+    let currentString = `${formatted_var}: ${percentageRange} <br>`;
     appendDisplayString(quartileValue, displayStringObject, currentString);
 
 

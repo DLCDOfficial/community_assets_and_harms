@@ -3,6 +3,7 @@
 
 import { loadParquet } from './dataProcessor.js';
 
+
 /**
  * Append <calcite-combobox-item> elements to a parent element.
  * @param {HTMLElement} comboboxEl - The combobox container.
@@ -13,10 +14,38 @@ function appendComboboxItems(comboboxEl, values) {
   values.sort().forEach(val => {
     const item = document.createElement('calcite-combobox-item');
     item.setAttribute('value', val);
-    item.setAttribute('heading', val);
+    const header = formatHeader(val)
+    //The display name should be different than the value
+    item.setAttribute('heading', header);
     comboboxEl.append(item);
   });
 }
+
+/**
+ * Format a header string: remove underscores, capitalize words,
+ * and handle specific exceptions
+ * @param {string} str - The string to format
+ * @returns {string} - Formatted string
+ */
+export function formatHeader(str) {
+  if (!str) return "";
+
+  // Define exceptions
+  const exceptions = {
+    "community_center_dist": "Community Center Distance"
+  };
+
+  // Check if str matches an exception
+  if (exceptions[str]) return exceptions[str];
+
+  //remove underscores, capitalize each word
+  return str
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 
 /**
  * Attach a change listener to a calcite-combobox.
