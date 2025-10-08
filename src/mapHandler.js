@@ -53,6 +53,7 @@ export function createHexLayer(uniqueHexes, map) {
 
   return new FeatureLayer({
     objectIdField: 'grid_id',
+    opacity: 0.85,
     popupEnabled: true,
     popupTemplate: {
       outFields: ['*'],
@@ -161,15 +162,14 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
 /** Initialize map handler with the map view.
  * @param {Object} mapView - The map view object.
  */
-export function initMapHandler(mapView) { view = mapView; 
+export function initMapHandler(mapView) {
+  view = mapView; 
   // Add click handler for hexes
   view.on("click", async (event) => {
     const response = await view.hitTest(event);
 
   if (highlightedCell) {
-    highlightedCell.style.border = ''
-
-
+    highlightedCell.style.border = '';
   }
     
     // Filter for  hex layer only

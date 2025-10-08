@@ -142,12 +142,13 @@ export function attachHoverTooltip(view, hexLayer) {
 
       if (originalGraphic) {
         const attrs = originalGraphic.attributes;
+        const { native: { clientX: x, clientY: y } } = event;
         showTooltip(
           tooltip,
           `<div><strong>Harms:</strong> ${attrs.final_value_harms}</div>
            <div><strong>Assets:</strong> ${attrs.final_value_assets}</div>`,
-          event.x - 50,
-          event.y + 200
+          x,
+          y
         );
       }
     } else {
