@@ -1,6 +1,6 @@
 # Uber H3 Plaground
 
-View in GitHub Pages [https://dlcdcdo.github.io/uber-h3-playground/dist/](https://dlcdcdo.github.io/uber-h3-playground/dist/)
+View in GitHub Pages [https://dlcdofficial.github.io/community_assets_and_harms/dist/](https://dlcdofficial.github.io/community_assets_and_harms/dist/)
 
 ## Project Scaffold
 
