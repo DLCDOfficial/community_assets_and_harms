@@ -32,7 +32,7 @@ const view = mapComponent.view;
 initMapHandler(view);
 
 const legendEl = document.getElementById('legend-container');
-view.ui.add(legendEl, "bottom-right");
+view.ui.add(legendEl, "bottom-left");
 legendEl.style.display = "block";
 
 // ------------------ Indicator Dropdown ------------------
