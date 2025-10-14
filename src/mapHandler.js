@@ -14,15 +14,28 @@ import "@arcgis/map-components/components/arcgis-legend";
 import "@arcgis/map-components/components/arcgis-search";
 
 // ------------------ State Variables ------------------
+
+// Reference to the map view
 let view = null;
+
+// Reference to the hex layer that is currently displayed
 let hexLayer = null;
+
+// hex data loaded from Parquet file. where hexStore[hexId] = array of data rows for that hex
 let hexStore = null;
+
+// Store references to screener layers for toggling visibility
 let screenerLayers = {};
+
+//currently highlighted cell in the legend
 let highlightedCell = null;
+
+//current city file, indicators, and region
 let cityFile = null;
 let indicators = null;
 let region = 'ugb_pct_rank';
 
+//screener colors
 let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1]};
 
 // ------------------ Hex Layer Utilities ------------------
@@ -78,6 +91,8 @@ export function createHexLayer(uniqueHexes, map) {
 
 /**
  * Adds an array of H3 hex IDs to a map as outlined hexes.
+ * Used for displaying screener layers like tsunami zones, highways, etc.
+ * 
  * @param {Map} map - The ArcGIS Map object.
  * @param {string[]} hexIds - Array of H3 hex IDs.
  */
@@ -112,8 +127,11 @@ function addHexOutlinesToMap(map, screenerInfo) {
   console.log("Added screener layer:", layerName);
   screenerLayers[layerName] = layer;
 }
+
 /**
  * Update hex layer attributes based on calculations from hexStore and user options.
+ * updates the FeatureLayer and in-memory graphics for hover tooltips.
+ * 
  * @param {FeatureLayer} hexLayer 
  * @param {Object} hexStore the hexStore loaded from the parquet file. hexId -> array of data rows.
  * @param {Object} userOptions  
@@ -171,7 +189,7 @@ export function initMapHandler(mapView) { view = mapView;
     buttonEnabled: false,
     breakpoint: false,
   };
-  view.popup.maxHeight = 200; // optional: makes tall content scrollable
+  view.popup.maxHeight = 200; 
 
   // Add click handler for hexes
   view.on("click", async (event) => {
@@ -301,7 +319,7 @@ function clearAllLayers() {
 export function toggleLayer(layerName, visible = true) {
   console.log("Toggling layer:", layerName, "to", visible);
   console.log(screenerLayers);
-  const layer = screenerLayers[layerName]; // hexLayers is your object storing layer references
+  const layer = screenerLayers[layerName]; // screenerLayers is object storing layer references
   if (layer) {
     console.log(`Toggling layer "${layerName}" to ${visible}`);
     layer.visible = visible;
