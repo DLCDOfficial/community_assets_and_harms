@@ -266,9 +266,18 @@ export async function loadCity(fileName) {
   attachHoverTooltip(view, hexLayer);
    for (const flag in flags_data) {
     if (flags_data[flag].length > 0) {
+      console.log("Adding screener layer for:", flag);
       addHexOutlinesToMap(view.map, {hexIds: flags_data[flag], color: colors[flag], layerName: flag} );
     }
   }
+
+  ["tsunami_zone","electric_transmission_lines","highway"].forEach(layerName => {
+  const checkbox = document.getElementById(layerName);
+  if (checkbox) {
+    toggleLayer(layerName, checkbox.checked);
+    }
+  });
+  
 
   
 }
