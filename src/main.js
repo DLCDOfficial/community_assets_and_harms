@@ -40,6 +40,11 @@ createIndicatorElements(indicatorCombo, (selectedIndicators) => {
   setIndicators(selectedIndicators);
 });
 
+indicatorCombo.addEventListener("calciteComboboxChange", () => {
+  if (indicatorCombo.selectedItems.length === 0) {
+    setIndicators([]); // No indicators}) selected
+      }});
+
 // Force Calcite to only show a single selected item in the combobox display, but allow multiple selection.
 indicatorCombo.selectionDisplay = "single";
 indicatorCombo.selectAllEnabled = true;
