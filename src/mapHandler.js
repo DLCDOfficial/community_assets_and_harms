@@ -2,6 +2,7 @@
 import Graphic from "@arcgis/core/Graphic.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
+import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
 import { cellToBoundary } from "h3-js";
 import { generateRenderer } from './renderer.js';
@@ -12,6 +13,7 @@ import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import "@arcgis/map-components/components/arcgis-legend";
 import "@arcgis/map-components/components/arcgis-search";
+
 
 // ------------------ State Variables ------------------
 
@@ -60,7 +62,7 @@ export function createHexLayer(uniqueHexes, map) {
     return new Graphic({
       geometry: polygon,
       symbol: fillSymbol,
-      attributes: { grid_id: hex, hex_id: hex, final_value_assets: 0.0, final_value_harms: 0.0 }
+      attributes: { grid_id: hex, hex_id: hex, displayString: hex, final_value_assets: 0.0, final_value_harms: 0.0 }
     });
   });
 
@@ -71,9 +73,11 @@ export function createHexLayer(uniqueHexes, map) {
     popupTemplate: {
       
       outFields: ['*'],
-      content: (feature) =>
-        `${feature.graphic.attributes.displayString}`
-    },
+      content: function (feature) {
+    // feature.graphic.attributes is always current when the popup opens
+    return feature.graphic.attributes.displayString;
+  }
+},
     fields: [
       { name: "grid_id", type: "oid" },
       { name: "hex_id", type: "string" },
@@ -158,7 +162,8 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
     return feature;
   });
 
-  await hexLayer.applyEdits({ updateFeatures: edits });
+    await hexLayer.applyEdits({ updateFeatures: edits });
+
 
   // Update in-memory graphics for hover tooltip
   //this is necessary because the hover tooltip uses the in-memory graphics, not the FeatureLayer source
@@ -173,6 +178,22 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
     }
   });
 
+
+  // Preserve/update popup if open on a hex
+
+ if (view.popup.selectedFeature) {
+  const selectedHexId = view.popup.selectedFeature.attributes.hex_id;
+  const newFeature = hexLayer.source.items.find(g => g.attributes.hex_id === selectedHexId);
+  if (newFeature) {
+    view.popup.selectedFeature = newFeature;
+    view.popup.content = newFeature.attributes.displayString;
+  }
+}
+
+ 
+
+
+
   hexLayer.refresh();
 }
 
@@ -185,6 +206,10 @@ export function initMapHandler(mapView) { view = mapView;
 
     // Configure popup so it never goes offscreen
   view.popup.dockEnabled = true;
+  view.popup.featureNavigationEnabled = false;
+  view.popup.autoCloseEnabled =true;
+
+
   view.popup.dockOptions = {
     buttonEnabled: false,
     breakpoint: false,
@@ -217,6 +242,18 @@ export function initMapHandler(mapView) { view = mapView;
 
     }
   });
+
+
+// Watch for popup close to remove highlight
+const handle = reactiveUtils.watch(
+  () => view.popup.visible,
+  (visible) => {
+    if (!visible && highlightedCell) {
+      highlightedCell.style.border = '';
+      highlightedCell = null;
+    }
+  });
+
 }
 
 
@@ -266,9 +303,18 @@ export async function loadCity(fileName) {
   attachHoverTooltip(view, hexLayer);
    for (const flag in flags_data) {
     if (flags_data[flag].length > 0) {
+      console.log("Adding screener layer for:", flag);
       addHexOutlinesToMap(view.map, {hexIds: flags_data[flag], color: colors[flag], layerName: flag} );
     }
   }
+
+  ["tsunami_zone","electric_transmission_lines","highway"].forEach(layerName => {
+  const checkbox = document.getElementById(layerName);
+  if (checkbox) {
+    toggleLayer(layerName, checkbox.checked);
+    }
+  });
+  
 
   
 }
