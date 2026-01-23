@@ -32,7 +32,10 @@ export function formatHeader(str) {
 
   // Define exceptions
   const exceptions = {
-    "community_center_dist": "Community Center Distance"
+    "community_center_dist": "Community Center Distance",
+    "library_dist": "Library Distance",
+    "burn_prob": "Burn Probability",
+    "flame_length": "Flame Length"	  
   };
 
   // Check if str matches an exception
@@ -105,10 +108,8 @@ export async function createPlaceElements(comboboxEl, callback, filename = 'plac
 export async function createIndicatorElements(comboboxEl, callback, filename = 'harms_assets.parquet') {
   try {
     const data = await loadParquet(filename);
-
     const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]');
     const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]');
-
 
     appendGroupedItems(assetsGroup, data, 'asset');
     appendGroupedItems(harmsGroup, data, 'harm');
