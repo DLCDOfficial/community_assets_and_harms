@@ -9,16 +9,37 @@ import { loadParquet } from './dataProcessor.js';
  * @param {HTMLElement} comboboxEl - The combobox container.
  * @param {string[]} values - Array of values to append.
  */
-function appendComboboxItems(comboboxEl, values) {
+function appendComboboxItems(comboboxEl, in_values) {
+
+  // this is a hacky solution to solve sorting :/
+
+  const renameMap = {
+      burn_prob: "wildfire_burn_prob",
+      flame_length: "wildfire_flame_length",
+      earthquake_liquid: "liquefaction_earthquake"
+  };
+
+  const values = in_values.map(val => ({
+    val: val,
+    sortval: renameMap[val] || val
+  }));
+
+ 
+
   if (!comboboxEl) return;
-  values.sort().forEach(val => {
-    const item = document.createElement('calcite-combobox-item');
-    item.setAttribute('value', val);
-    const header = formatHeader(val)
-    //The display name should be different than the value
-    item.setAttribute('heading', header);
-    comboboxEl.append(item);
-  });
+
+  values
+    .sort((a, b) => a.sortval.localeCompare(b.sortval))
+    .forEach(obj => {
+
+      const item = document.createElement('calcite-combobox-item');
+
+      item.setAttribute('value', obj.val);  // use original value
+      const header = formatHeader(obj.val);
+      item.setAttribute('heading', header);
+
+      comboboxEl.append(item);
+    });
 }
 
 /**
@@ -34,8 +55,9 @@ export function formatHeader(str) {
   const exceptions = {
     "community_center_dist": "Community Center Distance",
     "library_dist": "Library Distance",
-    "burn_prob": "Burn Probability",
-    "flame_length": "Flame Length"	  
+    "burn_prob": "Wildfire Burn Probability",
+    "flame_length": "Wildfire Flame Length",
+    "earthquake_liquid": "Liquefaction- Earthquake"
   };
 
   // Check if str matches an exception
@@ -108,6 +130,9 @@ export async function createPlaceElements(comboboxEl, callback, filename = 'plac
 export async function createIndicatorElements(comboboxEl, callback, filename = 'harms_assets.parquet') {
   try {
     const data = await loadParquet(filename);
+
+
+
     const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]');
     const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]');
 
