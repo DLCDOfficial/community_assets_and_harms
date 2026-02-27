@@ -21,7 +21,7 @@ import "@arcgis/map-components/components/arcgis-legend";
 import "@arcgis/map-components/components/arcgis-search";
 
 // Wait until DOM is fully loaded
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ DOM ELEMENTS ------------------
   const indicatorCombo = document.querySelector('#indicator-combobox');

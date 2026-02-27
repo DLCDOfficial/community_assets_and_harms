@@ -7,6 +7,7 @@ body {
   background-color: var(--calcite-ui-foreground-2);
   margin: 0;
   padding: 0;
+  visibility: hidden;
 }
 
 arcgis-map {
