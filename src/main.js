@@ -88,6 +88,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ------------------ SHOW PAGE ------------------
-  document.body.style.visibility = "visible";
 });
