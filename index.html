@@ -9,6 +9,65 @@
 </head>
 
 <body>
+
+
+  <!-- DIALOGS    -->
+  <calcite-dialog open modal heading="Community Assets and Harms Mapping Tool" id="info-dialog">
+    <div>
+      <h2>Oregon Community Assets & Harms</h2>
+      <p><strong>A Mapping Tool</strong></p>
+
+      <p>
+        The Community Assets & Harms Mapping Tool is intended for use by planners across the state of Oregon in
+        identifying patterns of environmental conditions – both beneficial and harmful –
+        in their respective communities in a user-friendly fashion. Investigating these patterns is one step among many
+        in considering where to focus various local actions.
+        .
+      </p>
+
+      <p>
+        The data sources behind each indicator in this tool come from a variety of sources with differing update
+        schedules, and, like all data, have imperfections inherent in them.
+        The results of this mapping tool alone should not result in any decision-making or regulatory effect. They are
+        intended for planning purposes only.
+        The mapping tool uses large datasets and functions best on a desktop device with a strong internet connection.
+
+      </p>
+
+      <p>
+        For more information email
+        <a href="mailto:housing.dlcd@dlcd.oregon.gov?subject=Harms%20and%20Assets%20Tool">
+          housing.dlcd@dlcd.oregon.gov
+        </a>  
+      </p>
+    </div>
+  </calcite-dialog>
+
+
+
+  <calcite-dialog id="guide-dialog" heading="Community Assets and Harms User Guide" modal>
+    <div>
+      <h2>User Guide</h2>
+
+      <p><strong>Scoring</strong></p>
+      <p>
+        Each indicator is scored <strong>relative to the selected Comparison Region</strong> (UGB, Region, or State).
+        This means a value can change depending on what it is being compared against.
+        For example, a hex in Portland may have a Childcare score of 0.34 when compared to all other hexes in Portland
+        (UGB), but a childcare score of 0.84 when compared to all other hexes in the State.
+      </p>
+      <p>
+        Because all scores are relative, changing the Comparison Region can significantly shift results. Reviewing
+        scores with multiple comparison regions can provide important context.
+      </p>
+      <p>
+        The final Harms and Assets scores represent the <strong>average</strong> of the relative scores across all
+        selected Harms or Assets.
+      </p>
+    </div>
+  </calcite-dialog>
+
+
   <calcite-shell>
     <!-- HEADER WITH LOGO -->
     <calcite-navigation slot="header">
@@ -23,25 +82,35 @@
           <calcite-action active text="Configure" icon="configure" text-enabled></calcite-action>
         </calcite-action-group>
         <calcite-action-group slot="bottom-actions">
-          <calcite-action text="About" icon="information" text-enabled></calcite-action>
+          <calcite-action id="guide-action" text="User Guide" icon="information" text-enabled></calcite-action>
+        </calcite-action-group>
+        <calcite-action-group slot="bottom-actions">
+          <calcite-action id="about-action" text="About" icon="information" text-enabled></calcite-action>
         </calcite-action-group>
       </calcite-action-bar>
 
+      <!-- MAIN PANEL CONTROLS-->
       <calcite-panel heading="Configure" id="panel-start">
+
+        <!-- place dropdown -->
         <calcite-block heading="Place" description="Select a UGB" icon-start="h3-hexagon" expanded>
           <calcite-combobox id="place-combobox" placeholder="Select a UGB" selection-mode="single">
-            <!-- Populate with place names -->
           </calcite-combobox>
         </calcite-block>
-        <calcite-block collapsible heading="Indicators" description="Select Harms & Assets" icon-start="effects" expanded>
+
+        <!-- indicators dropdown -->
+        <calcite-block collapsible heading="Indicators" description="Select Harms & Assets" icon-start="effects"
+          expanded>
           <calcite-combobox id="indicator-combobox" placeholder="Indicators" selection-mode="multiple"
             selected-items-label="single" style="z-index: 1000;">
-            <!-- Populate with indicators -->
             <calcite-combobox-item-group label="Assets"></calcite-combobox-item-group>
             <calcite-combobox-item-group label="Harms"></calcite-combobox-item-group>
           </calcite-combobox>
         </calcite-block>
-        <calcite-block collapsible heading="Screeners" description="Select Screener Overlays" icon-start="map-pin" expanded>
+
+        <!-- screeners selection-->
+        <calcite-block collapsible heading="Screeners" description="Select Screener Overlays" icon-start="map-pin"
+          expanded>
           <div id="layer-controls">
             <label><input type="checkbox" id="tsunami_zone" unchecked> Tsunami Zone</label><br>
             <label><input type="checkbox" id="highway" unchecked> Highway</label><br>
@@ -49,7 +118,10 @@
               Lines</label>
           </div>
         </calcite-block>
-        <calcite-block collapsible heading="Comparison" description="Select Comparison Region" icon-start="compare" expanded>
+
+        <!-- comparison region selection-->
+        <calcite-block collapsible heading="Comparison" description="Select Comparison Region" icon-start="compare"
+          expanded>
           <div id="comparison-region">
             <calcite-radio-button-group name="Options" layout="horizontal">
               <calcite-label layout="inline">
@@ -67,20 +139,22 @@
             </calcite-radio-button-group>
           </div>
         </calcite-block>
+
       </calcite-panel>
     </calcite-shell-panel>
 
-    </calcite-shell-panel>
+
     <!-- MAIN CONTENT (MAP) -->
     <calcite-panel>
       <arcgis-map basemap="gray-vector" center="-120.70, 44.12" zoom="6">
         <arcgis-zoom position="top-right"></arcgis-zoom>
+      </arcgis-map>
     </calcite-panel>
   </calcite-shell>
 
   <!-- CUSTOM LEGEND TO INJECT INTO MAP UI-->
   <div id="legend-container" style="background:white; padding:20px; z-index:100; display: none">
-    <!-- Main Title -->
+
 
     <!-- Grid Container -->
     <div style="display:grid; 
@@ -92,7 +166,7 @@
       <!-- Y axis label -->
       <div
         style="position:absolute; left:5px; top:50px; writing-mode: vertical-rl; font-weight:bold; text-align:center;">
-        ← Higher Assets 
+        ← Higher Assets
       </div>
 
       <!-- Percentage labels y direction -->
@@ -148,6 +222,7 @@
 
     </div>
   </div>
+
 
 
   <div id="hover-tooltip"></div>
