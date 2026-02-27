@@ -131,8 +131,6 @@ export async function createIndicatorElements(comboboxEl, callback, filename = '
   try {
     const data = await loadParquet(filename);
 
-
-
     const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]');
     const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]');
 
