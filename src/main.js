@@ -23,7 +23,6 @@ import "@arcgis/map-components/components/arcgis-basemap-toggle";
 
 // Wait until DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
-
   // ------------------ DOM ELEMENTS ------------------
   const indicatorCombo = document.querySelector('#indicator-combobox');
   const placeCombo = document.querySelector('#place-combobox');
