@@ -19,10 +19,10 @@ import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import "@arcgis/map-components/components/arcgis-legend";
 import "@arcgis/map-components/components/arcgis-search";
+import "@arcgis/map-components/components/arcgis-basemap-toggle";
 
 // Wait until DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
-
   // ------------------ DOM ELEMENTS ------------------
   const indicatorCombo = document.querySelector('#indicator-combobox');
   const placeCombo = document.querySelector('#place-combobox');
