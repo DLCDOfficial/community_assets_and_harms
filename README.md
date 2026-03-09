@@ -1,4 +1,4 @@
-# Uber H3 Plaground
+# Community Assets and Harms
 
 View in GitHub Pages [https://dlcdofficial.github.io/community_assets_and_harms/dist/](https://dlcdofficial.github.io/community_assets_and_harms/dist/)
 
