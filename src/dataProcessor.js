@@ -32,7 +32,7 @@ export async function loadParquet(filename) {
 export async function loadHexData(parquetFile) {
   const data = await loadParquet(parquetFile);
 
-  const flags_data = {electric_transmission_lines: [],highway: [],tsunami_zone: []}
+  const flags_data = {electric_transmission_lines: [],highway: [],tsunami_zone: [],floodway: []}
   const hexStore = {};
   data.forEach(d => {
     const id = d['grid_id'];

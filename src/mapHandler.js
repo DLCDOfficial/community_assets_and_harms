@@ -38,7 +38,7 @@ let indicators = null;
 let region = 'ugb_pct_rank';
 
 //screener colors
-let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1]};
+let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1], floodway: [1,0,0,255]};
 
 // ------------------ Hex Layer Utilities ------------------
 
@@ -308,7 +308,7 @@ export async function loadCity(fileName) {
     }
   }
 
-  ["tsunami_zone","electric_transmission_lines","highway"].forEach(layerName => {
+  ["tsunami_zone","electric_transmission_lines","highway","floodway"].forEach(layerName => {
   const checkbox = document.getElementById(layerName);
   if (checkbox) {
     toggleLayer(layerName, checkbox.checked);
@@ -363,6 +363,7 @@ function clearAllLayers() {
  * @param {boolean} visible - true = show, false = hide
  */
 export function toggleLayer(layerName, visible = true) {
+  console.log("TRIGGERED")
   console.log("Toggling layer:", layerName, "to", visible);
   console.log(screenerLayers);
   const layer = screenerLayers[layerName]; // screenerLayers is object storing layer references
