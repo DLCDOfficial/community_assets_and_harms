@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ------------------ LAYER CHECKBOXES ------------------
-  ["tsunami_zone", "electric_transmission_lines", "highway"].forEach(layerName => {
+  ["tsunami_zone", "electric_transmission_lines", "highway", "floodway"].forEach(layerName => {
     const checkbox = document.getElementById(layerName);
     if (checkbox) {
       checkbox.addEventListener("change", (e) => toggleLayer(layerName, e.target.checked));
