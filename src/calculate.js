@@ -7,7 +7,7 @@
 // The bin numbers are then combined into a string like "1,3" which maps to a defined color
 import { formatHeader } from './htmlHelpers.js';
 
-
+var screeners =   ["electric_transmission_lines", "highway", "tsunami_zone", "floodway" ]
 
 /**
  * assign a bin (1-4) for a value based on provided thresholds
@@ -52,24 +52,9 @@ function getPercentileFromBin(bin) {
  * @returns 
  */
 function appendDisplayString(bin, displayStringObject, newString) {
-  if(bin == 1){
-    displayStringObject[1] += newString
-    return;
-  }
-  if(bin == 2){
-    displayStringObject[2] += newString
-    return;
-  }
-  if(bin == 3){
-    displayStringObject[3] += newString
-    return;
-  }
-  if(bin == 4){
-    displayStringObject[4] += newString
-    return;
-  }
-  return;}
-/**
+  displayStringObject[bin] += newString;
+}
+/**.
  * main calculation function.
  * 
  * Calculates average values for harms and assets, then assigns bins based on thresholds.
@@ -89,23 +74,35 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
   let countAssets = 0;
 
   //object to hold strings for each bin to facilitate ordered display in popup
-  let displayStringObject = {1: '', 2: '', 3: '', 4: ''};
+  let displayStringObject = {1: '', 2: '', 3: '', 4: '', 0: ' <br> '};
 
   //string to display in popup
   let displayString = '';
 
   //iterate through each row of data for this hex
   rows.forEach(row => {
-    //skip if this variable is not in the selected indicators set
-    if (!indicator_set.has(row.var)) return;
 
     const value = row[field];
-    const quartileValue = assignBin(value);
+    const formattedVar = formatHeader(row.var);
+    
+// if it is an indicator.. we don't want to display a percentage class, but a True/False.
+// We have to handle indicators FIRST because they will NEVER appear in the selected indicators set
+    if(screeners.includes(row.var)){
+      const indicatorPresent = value > 0.5 ? "Yes" : "No";
+      const indicatorString = `${formattedVar}: ${indicatorPresent} <br>`;
+     // 0 will be the value for indicators. the other vars will be assigned 1,2,3, or 4 based on the quartile they fall into. 
+      appendDisplayString(0,displayStringObject, indicatorString);
+      return
 
+    }
+
+    //skip if this variable is not in the selected indicators set
+
+    if (!indicator_set.has(row.var)) return;
+
+    const quartileValue = assignBin(value);
     const percentageRange = getPercentileFromBin(quartileValue);
-      
-    const formatted_var = formatHeader(row.var)
-    let currentString = `${formatted_var}: ${percentageRange} <br>`;
+    let currentString = `${formattedVar}: ${percentageRange} <br>`;
     appendDisplayString(quartileValue, displayStringObject, currentString);
 
 
@@ -122,12 +119,7 @@ const calculateValue = (field = 'ugb_pct_rank', rows = [], indicator_set) => {
   // build the display string by concatenating in order of bins (4,3,2,1)
   // this ensures that higher percentile variables appear first in the popup
 
-  // e.g. if a hex has one variable in the 75-100% bin and two in the 0-25% bin,
-  // we want the 75-100% variable to appear first in the popup
 
- //sort ensures order is always 4,3,2,1
- //then we are checking if there is any string for that bin
- //if so, we append it to the displayString
   Object.keys(displayStringObject).sort((a, b) => b - a).forEach(bin => {
     
     if (displayStringObject[bin] !== '') {
