@@ -13,7 +13,7 @@ import fs from 'fs';
 // st_pct_rank | 0.8696605133700258
 // type | harm
 
-const csvFile = fs.readFileSync('./parquet_writer/harms_assets.csv', 'utf8');
+const csvFile = fs.readFileSync('./parquet_writer/harms_assets_new.csv', 'utf8');
 
 Papa.parse(csvFile, {
     header: true, // Use the first row as headers
@@ -34,7 +34,7 @@ async function createParquetFile (data) {
         "flag": new Set(),
     };
     // stores place names for UI dropdown filter
-    const places = new Set();
+    const places = new Map()
     const hex_schema = new ParquetSchema({
         grid_id: { type: 'UTF8', compression: 'SNAPPY' },
         value: { type: 'FLOAT', compression: 'SNAPPY' },
@@ -52,7 +52,9 @@ async function createParquetFile (data) {
         value: { type: 'UTF8', compression: 'SNAPPY' }
     });
     const places_schema = new ParquetSchema({
-        name: { type: 'UTF8', compression: 'SNAPPY' }
+        name: { type: 'UTF8', compression: 'SNAPPY' },
+        region: { type: 'UTF8', compression: 'SNAPPY' }
+
     });
 
     const writers = {};
@@ -69,7 +71,7 @@ async function createParquetFile (data) {
     for (const d of data) {
         if (d['GRID_ID'] === null ) { continue; }
         harms_assets[d['type']].add(d['var']); // add asset, harm, or flag var
-        places.add(d['instName']);
+        places.set(d['instName'],d['region']);
         const writer = await openWriter(d['instName']);
         await writer.appendRow({
             grid_id: d['GRID_ID'], // make INT64
@@ -98,9 +100,9 @@ async function createParquetFile (data) {
         }
     }
     // Write places
-    for (const place of places) {
+    for (const [name, region] of places.entries()) {
         await writers['places'].appendRow({
-            name: place
+            name, region
         });
     }
 

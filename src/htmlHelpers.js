@@ -103,9 +103,85 @@ function appendGroupedItems(groupEl, data, type) {
  * Creates and populates place selection items.
  * @param {HTMLElement} comboboxEl
  * @param {Function} callback - Receives a single normalized string or null.
- * @param {string} filename - Optional Parquet file name
+ * @param {string} filename -  Parquet file name (probably places.parquet)
  */
-export async function createPlaceElements(comboboxEl, callback, filename = 'places.parquet') {
+
+export async function createPlaceElements(
+  comboboxEl,
+  callback,
+  filename = 'places.parquet'
+) {
+  try {
+    const data = await loadParquet(filename);
+
+    if (!comboboxEl) return;
+
+    // --- 1. CLEAN + NORMALIZE ---
+    const cleaned = data
+      .filter(d => d?.name && d?.region)
+      .map(d => ({
+        name: d.name.trim(),
+        region: d.region.trim()
+      }));
+
+    // --- 2. SORT BY PLACE NAME ---
+    cleaned.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    // --- 3. GROUP BY REGION ---
+    const grouped = {};
+
+    for (const d of cleaned) {
+      if (!grouped[d.region]) {
+        grouped[d.region] = [];
+      }
+      grouped[d.region].push(d.name);
+    }
+
+    console.log(grouped);
+
+    // --- 4. ADD TO GROUPS ---
+    for (const region in grouped) {
+
+      const groupEl = comboboxEl.querySelector(
+        `calcite-combobox-item-group[label="${region}"]`
+      );
+
+      if (!groupEl) {
+        console.log("Missing group:", region);
+        continue;
+      }
+
+      const cities = grouped[region];
+
+      for (const city of cities) {
+        const item = document.createElement("calcite-combobox-item");
+
+        item.setAttribute("value", city);
+        item.setAttribute("text-label", city);
+
+        groupEl.appendChild(item);
+      }
+    }
+
+    // --- 5. SELECTION HANDLER ---
+    attachComboboxListener(comboboxEl, (values) => {
+      const normalized =
+        values[0]?.replaceAll(/[ /]/g, "_").toLowerCase() || null;
+
+      callback(normalized);
+    });
+
+  } catch (err) {
+    console.error("Failed to create place elements:", err);
+  }
+}
+
+
+
+
+export async function createPlaceElementsold(comboboxEl, callback, filename = 'places.parquet') {
   try {
     const data = await loadParquet(filename);
     const placeNames = data.map(d => d.name);
