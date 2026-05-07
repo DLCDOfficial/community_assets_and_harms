@@ -363,7 +363,6 @@ function clearAllLayers() {
  * @param {boolean} visible - true = show, false = hide
  */
 export function toggleLayer(layerName, visible = true) {
-  console.log("TRIGGERED")
   console.log("Toggling layer:", layerName, "to", visible);
   console.log(screenerLayers);
   const layer = screenerLayers[layerName]; // screenerLayers is object storing layer references
