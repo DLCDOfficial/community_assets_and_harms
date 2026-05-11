@@ -38,7 +38,7 @@ let indicators = null;
 let region = 'ugb_pct_rank';
 
 //screener colors
-let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1], floodway: [1,0,0,255]};
+let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1], floodway: [140,0,140,1]};
 
 // ------------------ Hex Layer Utilities ------------------
 
