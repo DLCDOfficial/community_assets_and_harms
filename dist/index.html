@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assets & Harms</title>
   <script type="module" src="https://js.arcgis.com/calcite-components/3.3.0/calcite.esm.js"></script>
-  <script type="module" crossorigin src="./assets/index-BtjJiBBU.js"></script>
+  <script type="module" crossorigin src="./assets/index-MNL_mbiE.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-FMl8DCyv.css">
 </head>
 
@@ -97,9 +97,18 @@
       <!-- MAIN PANEL CONTROLS-->
       <calcite-panel heading="Configure" id="panel-start">
 
+
         <!-- place dropdown -->
         <calcite-block heading="Place" description="Select a UGB" icon-start="h3-hexagon" expanded>
           <calcite-combobox id="place-combobox" placeholder="Select a UGB" selection-mode="single">
+            <calcite-combobox-item-group label="Metro"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Southeast"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Southwest"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Willamette Valley"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Northeast"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Northern Coast"></calcite-combobox-item-group>
+            <calcite-combobox-item-group label="Central"></calcite-combobox-item-group>
+            
           </calcite-combobox>
         </calcite-block>
 
@@ -120,12 +129,15 @@
             <label><input type="checkbox" id="tsunami_zone" unchecked> Tsunami Zone</label><br>
             <label><input type="checkbox" id="highway" unchecked> Highway</label><br>
             <label><input type="checkbox" id="electric_transmission_lines" unchecked> Electric Transmission
-              Lines</label>
+              Lines</label><br>
+            <label><input type="checkbox" id="floodway" unchecked> Floodway</label><br>
+
           </div>
         </calcite-block>
 
+
         <!-- comparison region selection-->
-        <calcite-block collapsible heading="Comparison" description="Select Comparison Region" icon-start="compare"
+        <calcite-block collapsible heading="Comparison" description="Select Comparison Geography" icon-start="compare"
           expanded>
           <div id="comparison-region">
             <calcite-radio-button-group name="Options" layout="horizontal">
@@ -135,11 +147,11 @@
               </calcite-label>
               <calcite-label layout="inline">
                 <calcite-radio-button value="region_pct_rank"></calcite-radio-button>
-                Region
+                UGBs in the Region
               </calcite-label>
               <calcite-label layout="inline">
                 <calcite-radio-button value="st_pct_rank"></calcite-radio-button>
-                State
+                UGBs in the State
               </calcite-label>
             </calcite-radio-button-group>
           </div>
