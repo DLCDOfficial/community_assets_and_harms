@@ -3,7 +3,7 @@ import Graphic from "@arcgis/core/Graphic.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
-
+import VectorTileLayer from "@arcgis/core/layers/VectorTileLayer.js";
 import { cellToBoundary } from "h3-js";
 import { generateRenderer } from './renderer.js';
 import { calculateValue } from './calculate.js';
@@ -20,11 +20,15 @@ import "@arcgis/map-components/components/arcgis-search";
 // Reference to the map view
 let view = null;
 
+
+
+
 // Reference to the hex layer that is currently displayed
 let hexLayer = null;
 
 // hex data loaded from Parquet file. where hexStore[hexId] = array of data rows for that hex
 let hexStore = null;
+let hexLayerOpacity = 1.0; // default opacity
 
 // Store references to screener layers for toggling visibility
 let screenerLayers = {};
@@ -36,7 +40,6 @@ let highlightedCell = null;
 let cityFile = null;
 let indicators = null;
 let region = 'ugb_pct_rank';
-
 //screener colors
 let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1], floodway: [140,0,140,1]};
 
@@ -68,7 +71,7 @@ export function createHexLayer(uniqueHexes, map) {
 
   return new FeatureLayer({
     objectIdField: 'grid_id',
-    opacity: 0.85,
+    opacity: hexLayerOpacity,
     popupEnabled: true,
     popupTemplate: {
       
@@ -202,7 +205,23 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
 /** Initialize map handler with the map view.
  * @param {Object} mapView - The map view object.
  */
-export function initMapHandler(mapView) { view = mapView; 
+export function initMapHandler(mapView) { 
+  view = mapView; 
+
+  // Injects raw imagery with a completely monochrome road & text grid on top
+  if (view.map) {
+    view.map.basemap = {
+      baseLayers: [
+        { type: "style", styleUrl: "gray-vector" }
+      ],
+      referenceLayers: [
+        { type: "style", styleUrl: "gray-vector" }
+      ]
+    };
+  }
+
+  
+  
 
     // Configure popup so it never goes offscreen
   view.popup.dockEnabled = true;
@@ -300,6 +319,7 @@ export async function loadCity(fileName) {
   hexLayer.when(() => view.goTo(hexLayer.fullExtent.expand(1.15)));
 
   refreshHexLayer();
+  hexLayer.opacity = hexLayerOpacity;
   attachHoverTooltip(view, hexLayer);
    for (const flag in flags_data) {
     if (flags_data[flag].length > 0) {
@@ -340,7 +360,17 @@ function refreshHexLayer() {
   const userOptions = { indicators_set: new Set(indicators), region };
   updateHexValues(hexLayer, hexStore, userOptions);
 }
+/** Set the opacity of the hex layer.
+ * @param {number} value - The new opacity value (between 0 and 1).
+ */
 
+export function setHexLayerOpacity(value) {
+  hexLayerOpacity = value;
+
+  if (hexLayer) {
+    hexLayer.opacity = value;
+  }
+}
 
 /** 
  *  Clear all layers that have been added to a map.
