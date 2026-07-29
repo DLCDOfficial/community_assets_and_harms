@@ -3,7 +3,6 @@ import Graphic from "@arcgis/core/Graphic.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
-import VectorTileLayer from "@arcgis/core/layers/VectorTileLayer.js";
 import { cellToBoundary } from "h3-js";
 import { generateRenderer } from './renderer.js';
 import { calculateValue } from './calculate.js';
@@ -19,8 +18,6 @@ import "@arcgis/map-components/components/arcgis-search";
 
 // Reference to the map view
 let view = null;
-
-
 
 
 // Reference to the hex layer that is currently displayed
@@ -207,21 +204,6 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
  */
 export function initMapHandler(mapView) { 
   view = mapView; 
-
-  // Injects raw imagery with a completely monochrome road & text grid on top
-  if (view.map) {
-    view.map.basemap = {
-      baseLayers: [
-        { type: "style", styleUrl: "gray-vector" }
-      ],
-      referenceLayers: [
-        { type: "style", styleUrl: "gray-vector" }
-      ]
-    };
-  }
-
-  
-  
 
     // Configure popup so it never goes offscreen
   view.popup.dockEnabled = true;
