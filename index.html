@@ -161,16 +161,30 @@
 
     <!-- MAIN CONTENT (MAP) -->
     <calcite-panel>
-      <arcgis-map basemap="gray-vector" center="-120.70, 44.12" zoom="6">
+      <arcgis-map basemap="streets-vector" center="-120.70, 44.12" zoom="6">
         <arcgis-zoom position="top-right"></arcgis-zoom>
-        <arcgis-basemap-toggle position="top-left"></arcgis-basemap-toggle>
+	<arcgis-basemap-toggle position="top-left"></arcgis-basemap-toggle>
       </arcgis-map>
     </calcite-panel>
   </calcite-shell>
 
+
+
   <!-- CUSTOM LEGEND TO INJECT INTO MAP UI-->
   <div id="legend-container" style="background:white; padding:20px; z-index:100; display: none">
+    <label for="opacitySlider" style="margin: 0; color: black; line-height: 1;">
+     Hex Opacity 
+    </label>
 
+    <calcite-slider
+      id="opacitySlider"
+      style="margin-top: -12px;"
+
+      min="0"
+      max="1"
+      step="0.01"
+      value="1">
+    </calcite-slider>
 
     <!-- Grid Container -->
     <div style="display:grid; 

@@ -6,7 +6,8 @@ import {
   clearCity,
   setIndicators,
   setRegion,
-  toggleLayer
+  toggleLayer,
+  setHexLayerOpacity
 } from './mapHandler.js';
 
 import {
@@ -36,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const aboutAction = document.getElementById("about-action");
   const userAction = document.getElementById("guide-action");
   const legendEl = document.getElementById('legend-container');
+  const opacitySlider = document.getElementById("opacitySlider");
 
 
   // --------------------CLICK FUNCTIONALITY -----------------
@@ -50,6 +52,13 @@ document.addEventListener("DOMContentLoaded", () => {
     legendEl.style.display = "block";
   }
 
+
+  // ------------------ OPACITY SLIDER ------------------
+  if (opacitySlider) {
+    opacitySlider.addEventListener("calciteSliderInput", (event) => {
+      setHexLayerOpacity(parseFloat(event.target.value));
+    });
+  }
   // ------------------ INDICATOR DROPDOWN ------------------
   if (indicatorCombo) {
     createIndicatorElements(indicatorCombo, (selectedIndicators) => {
