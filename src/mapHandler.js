@@ -25,7 +25,7 @@ let hexLayer = null;
 
 // hex data loaded from Parquet file. where hexStore[hexId] = array of data rows for that hex
 let hexStore = null;
-let hexLayerOpacity = 1.0; // default opacity
+let hexLayerOpacity = 0.8; // default opacity
 
 // Store references to screener layers for toggling visibility
 let screenerLayers = {};
