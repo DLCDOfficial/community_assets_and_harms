@@ -8,6 +8,10 @@ This project was originally created from Esri's VITE starter files.
 
 ## Getting Started
 
+Data Setup   AFTER CLONING REPO: (VITE will use /data directory to build dist folder, so copy the data from /dist/data to /data). This will need to be redone if source data changes.)
+```
+cp -r /dist/data ./data
+```
 Setup
 ```
 npm i
