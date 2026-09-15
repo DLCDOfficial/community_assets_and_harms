@@ -1,200 +1,196 @@
 // mapHandler.js
-import Graphic from "@arcgis/core/Graphic.js";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
-import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
-import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
-import { cellToBoundary } from "h3-js";
-import { generateRenderer } from './renderer.js';
-import { calculateValue } from './calculate.js';
-import { loadHexData } from './dataProcessor.js';
-import { attachHoverTooltip } from './htmlHelpers.js';
-import "@arcgis/map-components/components/arcgis-map";
-import "@arcgis/map-components/components/arcgis-zoom";
-import "@arcgis/map-components/components/arcgis-legend";
-import "@arcgis/map-components/components/arcgis-search";
-
+import Graphic from '@arcgis/core/Graphic.js'
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer.js'
+import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js'
+import * as reactiveUtils from '@arcgis/core/core/reactiveUtils.js'
+import { cellToBoundary } from 'h3-js'
+import { generateRenderer } from './renderer.js'
+import { calculateValue } from './calculate.js'
+import { loadHexData } from './dataProcessor.js'
+import { attachHoverTooltip } from './htmlHelpers.js'
+import '@arcgis/map-components/components/arcgis-map'
+import '@arcgis/map-components/components/arcgis-zoom'
+import '@arcgis/map-components/components/arcgis-legend'
+import '@arcgis/map-components/components/arcgis-search'
 
 // ------------------ State Variables ------------------
 
 // Reference to the map view
-let view = null;
-
+let view = null
 
 // Reference to the hex layer that is currently displayed
-let hexLayer = null;
+let hexLayer = null
 
 // hex data loaded from Parquet file. where hexStore[hexId] = array of data rows for that hex
-let hexStore = null;
-let hexLayerOpacity = 0.8; // default opacity
+let hexStore = null
+let hexLayerOpacity = 0.8 // default opacity
 
 // Store references to screener layers for toggling visibility
-let screenerLayers = {};
+let screenerLayers = {}
 
 //currently highlighted cell in the legend
-let highlightedCell = null;
+let highlightedCell = null
 
 //current city file, indicators, and region
-let cityFile = null;
-let indicators = null;
-let region = 'ugb_pct_rank';
+let indicators = null
+let region = 'ugb_pct_rank'
 //screener colors
-let colors = {tsunami_zone: [255, 0, 0, 1],electric_transmission_lines: [0, 0, 255, 1],highway: [0, 255, 0, 1], floodway: [140,0,140,1]};
+const colors = {
+  tsunami_zone: [255, 0, 0, 1],
+  electric_transmission_lines: [0, 0, 255, 1],
+  highway: [0, 255, 0, 1],
+  floodway: [140, 0, 140, 1]
+}
 
 // ------------------ Hex Layer Utilities ------------------
 
 /**
  *  Create a FeatureLayer of hexagons from a list of unique hex IDs.
- * 
- * @param {Array} uniqueHexes 
- * @param {} map 
+ *
+ * @param {Array} uniqueHexes
  * @returns  {FeatureLayer}
  */
-export function createHexLayer(uniqueHexes, map) {
- 
-
-  const graphics = uniqueHexes.map(hex => {
-    const polygon = { type: "polygon", rings: cellToBoundary(hex, true) };
+export function createHexLayer(uniqueHexes) {
+  const graphics = uniqueHexes.map((hex) => {
+    const polygon = { type: 'polygon', rings: cellToBoundary(hex, true) }
     const fillSymbol = {
-      type: "simple-fill",
+      type: 'simple-fill',
       color: [227, 139, 79, 0.6],
       outline: { color: [255, 255, 255, 0.8], width: 1 }
-    };
+    }
     return new Graphic({
       geometry: polygon,
       symbol: fillSymbol,
-      attributes: { grid_id: hex, hex_id: hex, displayString: hex, final_value_assets: 0.0, final_value_harms: 0.0 }
-    });
-  });
+      attributes: {
+        grid_id: hex,
+        hex_id: hex,
+        displayString: hex,
+        final_value_assets: 0.0,
+        final_value_harms: 0.0
+      }
+    })
+  })
 
   return new FeatureLayer({
     objectIdField: 'grid_id',
     opacity: hexLayerOpacity,
     popupEnabled: true,
     popupTemplate: {
-      
       outFields: ['*'],
-      content: function (feature) {
-    // feature.graphic.attributes is always current when the popup opens
-    return feature.graphic.attributes.displayString;
-  }
-},
+      content(feature) {
+        // feature.graphic.attributes is always current when the popup opens
+        return feature.graphic.attributes.displayString
+      }
+    },
     fields: [
-      { name: "grid_id", type: "oid" },
-      { name: "hex_id", type: "string" },
-      { name: "final_value_harms", type: "double"},
-      { name: "final_value_assets", type: "double"},
-      { name: "compositeKey", type: "string" },
-      { name: "displayString", type: "string" }
+      { name: 'grid_id', type: 'oid' },
+      { name: 'hex_id', type: 'string' },
+      { name: 'final_value_harms', type: 'double' },
+      { name: 'final_value_assets', type: 'double' },
+      { name: 'compositeKey', type: 'string' },
+      { name: 'displayString', type: 'string' }
     ],
     renderer: generateRenderer(),
     source: graphics
-  });
+  })
 }
-
-
 
 /**
  * Adds an array of H3 hex IDs to a map as outlined hexes.
  * Used for displaying screener layers like tsunami zones, highways, etc.
- * 
+ *
  * @param {Map} map - The ArcGIS Map object.
  * @param {string[]} hexIds - Array of H3 hex IDs.
  */
 function addHexOutlinesToMap(map, screenerInfo) {
-  const { hexIds, color, layerName } = screenerInfo;
-  const hexGraphics = hexIds.map(hexId => {
-    const boundary = cellToBoundary(hexId, true); // true = GeoJSON [lng, lat]
+  const { hexIds, color, layerName } = screenerInfo
+  const hexGraphics = hexIds.map((hexId) => {
+    const boundary = cellToBoundary(hexId, true) // true = GeoJSON [lng, lat]
 
     return new Graphic({
       geometry: {
-        type: "polygon",
+        type: 'polygon',
         rings: boundary.map(([lng, lat]) => [lng, lat]),
         spatialReference: { wkid: 4326 }
       },
       symbol: {
-        type: "simple-fill",
-        color: [0, 0, 0, 0],       // Transparent fill
+        type: 'simple-fill',
+        color: [0, 0, 0, 0], // Transparent fill
         outline: {
-          color: color,  // Red outline [255, 0, 0, 1]
+          color, // Red outline [255, 0, 0, 1]
           width: 1
         }
       }
-    });
-  });
+    })
+  })
 
   const layer = new GraphicsLayer({
     graphics: hexGraphics,
     visible: false
-  });
+  })
 
-  map.add(layer);
-  console.log("Added screener layer:", layerName);
-  screenerLayers[layerName] = layer;
+  map.add(layer)
+  console.log('Added screener layer:', layerName)
+  screenerLayers[layerName] = layer
 }
 
 /**
  * Update hex layer attributes based on calculations from hexStore and user options.
  * updates the FeatureLayer and in-memory graphics for hover tooltips.
- * 
- * @param {FeatureLayer} hexLayer 
+ *
+ * @param {FeatureLayer} hexLayer
  * @param {Object} hexStore the hexStore loaded from the parquet file. hexId -> array of data rows.
  * @param {Object} userOptions  
- *  userOptions: { indicators_set: Set<string>, region: string }      
+ *  userOptions: { indicators_set: Set<string>, region: string }  
  *       indicators_set: Set of selected indicator variable names.  
  *       region: The field to use for calculations (e.g., 'ugb_pct_rank', 'county_pct_rank', 'state_pct_rank').
  */
 
 export async function updateHexValues(hexLayer, hexStore, userOptions) {
-  const { indicators_set, region } = userOptions;
-  const results = await hexLayer.queryFeatures();
+  const { indicators_set, region } = userOptions
+  const results = await hexLayer.queryFeatures()
 
-  const hexValuesMap = {}; // to store calculated values for each hex
+  const hexValuesMap = {} // to store calculated values for each hex
   // so we can update the in-memory graphics for hover tooltip without recalling calculateValue
-  const edits = results.features.map(feature => {
-    const hexId = feature.getAttribute('hex_id');
-    const values = calculateValue(region, hexStore[hexId], indicators_set);
+  const edits = results.features.map((feature) => {
+    const hexId = feature.getAttribute('hex_id')
+    const values = calculateValue(region, hexStore[hexId], indicators_set)
 
-    feature.setAttribute('final_value_harms', values.avg_harms);
-    feature.setAttribute('final_value_assets', values.avg_assets);
-    feature.setAttribute('compositeKey', values.quartile_string);
-    feature.setAttribute('displayString', values.displayString);
-    hexValuesMap[hexId] = values; // save for later
-    return feature;
-  });
+    feature.setAttribute('final_value_harms', values.avg_harms)
+    feature.setAttribute('final_value_assets', values.avg_assets)
+    feature.setAttribute('compositeKey', values.quartile_string)
+    feature.setAttribute('displayString', values.displayString)
+    hexValuesMap[hexId] = values // save for later
+    return feature
+  })
 
-    await hexLayer.applyEdits({ updateFeatures: edits });
-
+  await hexLayer.applyEdits({ updateFeatures: edits })
 
   // Update in-memory graphics for hover tooltip
   //this is necessary because the hover tooltip uses the in-memory graphics, not the FeatureLayer source
-  hexLayer.source.items.forEach(graphic => {
-    const hexId = graphic.attributes.hex_id;
+  hexLayer.source.items.forEach((graphic) => {
+    const hexId = graphic.attributes.hex_id
     if (hexStore[hexId]) {
-      const values = hexValuesMap[hexId];
-      graphic.attributes.final_value_harms = values.avg_harms;
-      graphic.attributes.final_value_assets = values.avg_assets;
-      graphic.attributes.compositeKey = values.quartile_string;
-      graphic.attributes.displayString = values.displayString;
+      const values = hexValuesMap[hexId]
+      graphic.attributes.final_value_harms = values.avg_harms
+      graphic.attributes.final_value_assets = values.avg_assets
+      graphic.attributes.compositeKey = values.quartile_string
+      graphic.attributes.displayString = values.displayString
     }
-  });
-
+  })
 
   // Preserve/update popup if open on a hex
 
- if (view.popup.selectedFeature) {
-  const selectedHexId = view.popup.selectedFeature.attributes.hex_id;
-  const newFeature = hexLayer.source.items.find(g => g.attributes.hex_id === selectedHexId);
-  if (newFeature) {
-    view.popup.selectedFeature = newFeature;
-    view.popup.content = newFeature.attributes.displayString;
+  if (view.popup.selectedFeature) {
+    const selectedHexId = view.popup.selectedFeature.attributes.hex_id
+    const newFeature = hexLayer.source.items.find((g) => g.attributes.hex_id === selectedHexId)
+    if (newFeature) {
+      view.popup.selectedFeature = newFeature
+      view.popup.content = newFeature.attributes.displayString
+    }
   }
-}
 
- 
-
-
-
-  hexLayer.refresh();
+  hexLayer.refresh()
 }
 
 // ------------------ Map Handler Functions ------------------
@@ -202,80 +198,75 @@ export async function updateHexValues(hexLayer, hexStore, userOptions) {
 /** Initialize map handler with the map view.
  * @param {Object} mapView - The map view object.
  */
-export function initMapHandler(mapView) { 
-  view = mapView; 
+export function initMapHandler(mapView) {
+  view = mapView
 
-    // Configure popup so it never goes offscreen
-  view.popup.dockEnabled = true;
-  view.popup.featureNavigationEnabled = false;
-  view.popup.autoCloseEnabled =true;
-
+  // Configure popup so it never goes offscreen
+  view.popup.dockEnabled = true
+  view.popup.featureNavigationEnabled = false
+  view.popup.autoCloseEnabled = true
 
   view.popup.dockOptions = {
     buttonEnabled: false,
-    breakpoint: false,
-  };
-  view.popup.maxHeight = 200; 
+    breakpoint: false
+  }
+  view.popup.maxHeight = 200
 
   // Add click handler for hexes
-  view.on("click", async (event) => {
-    const response = await view.hitTest(event);
+  view.on('click', async (event) => {
+    const response = await view.hitTest(event)
 
-  if (highlightedCell) {
-    highlightedCell.style.border = '';
-  }
-    
+    if (highlightedCell) {
+      highlightedCell.style.border = ''
+    }
+
     // Filter for  hex layer only
-    const results = response.results.filter(r => r.graphic.layer === hexLayer);
-    
+    const results = response.results.filter((r) => r.graphic.layer === hexLayer)
+
     if (results.length > 0) {
-      const graphic = results[0].graphic;
-      const hexId = graphic.attributes.hex_id;
-      const rendererString = graphic.attributes.compositeKey;
-      
-      console.log("Hex clicked:", rendererString);
+      const graphic = results[0].graphic
+      const rendererString = graphic.attributes.compositeKey
 
-     const legend_div = document.getElementById(rendererString)
-     console.log(legend_div)
+      console.log('Hex clicked:', rendererString)
 
-     legend_div.style.border = "3px solid yellow";  
-     highlightedCell =legend_div    
+      const legend_div = document.getElementById(rendererString)
+      console.log(legend_div)
 
+      legend_div.style.border = '3px solid yellow'
+      highlightedCell = legend_div
     }
-  });
+  })
 
-
-// Watch for popup close to remove highlight
-const handle = reactiveUtils.watch(
-  () => view.popup.visible,
-  (visible) => {
-    if (!visible && highlightedCell) {
-      highlightedCell.style.border = '';
-      highlightedCell = null;
+  // Watch for popup close to remove highlight
+  reactiveUtils.watch(
+    () => view.popup.visible,
+    (visible) => {
+      if (!visible && highlightedCell) {
+        highlightedCell.style.border = ''
+        highlightedCell = null
+      }
     }
-  });
-
+  )
 }
-
 
 //getters and setters for state variables
 
 /**
- * 
- * @param {*} selectedIndicators 
+ *
+ * @param {*} selectedIndicators
  */
 export function setIndicators(selectedIndicators) {
-  indicators = selectedIndicators;
-  refreshHexLayer();
+  indicators = selectedIndicators
+  refreshHexLayer()
 }
 
 /**
- * 
- * @param {*} selectedRegion 
+ *
+ * @param {*} selectedRegion
  */
 export function setRegion(selectedRegion) {
-  region = selectedRegion;
-  refreshHexLayer();
+  region = selectedRegion
+  refreshHexLayer()
 }
 
 /**
@@ -283,90 +274,87 @@ export function setRegion(selectedRegion) {
  * @param {string} fileName - The name of the Parquet file to load.
  */
 
-
 export async function loadCity(fileName) {
-  cityFile = fileName;
-  const { hexStore: newHexStore, uniqueHexes, flags_data } = await loadHexData(fileName);
+  const { hexStore: newHexStore, uniqueHexes, flags_data } = await loadHexData(fileName)
 
   if (view.map) {
-    clearAllLayers();
+    clearAllLayers()
   }
 
-  hexLayer = createHexLayer(uniqueHexes, view.map);
+  hexLayer = createHexLayer(uniqueHexes)
 
- 
-  hexStore = newHexStore;
+  hexStore = newHexStore
 
-  view.map.add(hexLayer);
-  hexLayer.when(() => view.goTo(hexLayer.fullExtent.expand(1.15)));
+  view.map.add(hexLayer)
+  hexLayer.when(() => view.goTo(hexLayer.fullExtent.expand(1.15)))
 
-  refreshHexLayer();
-  hexLayer.opacity = hexLayerOpacity;
-  attachHoverTooltip(view, hexLayer);
-   for (const flag in flags_data) {
+  refreshHexLayer()
+  hexLayer.opacity = hexLayerOpacity
+  attachHoverTooltip(view, hexLayer)
+  for (const flag in flags_data) {
     if (flags_data[flag].length > 0) {
-      console.log("Adding screener layer for:", flag);
-      addHexOutlinesToMap(view.map, {hexIds: flags_data[flag], color: colors[flag], layerName: flag} );
+      console.log('Adding screener layer for:', flag)
+      addHexOutlinesToMap(view.map, {
+        hexIds: flags_data[flag],
+        color: colors[flag],
+        layerName: flag
+      })
     }
   }
 
-  ["tsunami_zone","electric_transmission_lines","highway","floodway"].forEach(layerName => {
-  const checkbox = document.getElementById(layerName);
-  if (checkbox) {
-    toggleLayer(layerName, checkbox.checked);
+  ;['tsunami_zone', 'electric_transmission_lines', 'highway', 'floodway'].forEach((layerName) => {
+    const checkbox = document.getElementById(layerName)
+    if (checkbox) {
+      toggleLayer(layerName, checkbox.checked)
     }
-  });
-  
-
-  
+  })
 }
 
 /** Clear the current city data and remove the hex layer from the map.
  */
 
 export function clearCity() {
-  clearAllLayers();
+  clearAllLayers()
 
-   view.goTo({
+  view.goTo({
     center: [-120.5, 44.0], // [longitude, latitude]
-    zoom: 6            // replace with your original zoom level
-  });
+    zoom: 6 // replace with your original zoom level
+  })
 }
-
 
 /** Refresh the hex layer by recalculating values based on current indicators and region.
  */
 
 function refreshHexLayer() {
-  if (!hexLayer || !hexStore || !indicators) return;
-  const userOptions = { indicators_set: new Set(indicators), region };
-  updateHexValues(hexLayer, hexStore, userOptions);
+  if (!hexLayer || !hexStore || !indicators) return
+  const userOptions = { indicators_set: new Set(indicators), region }
+  updateHexValues(hexLayer, hexStore, userOptions)
 }
 /** Set the opacity of the hex layer.
  * @param {number} value - The new opacity value (between 0 and 1).
  */
 
 export function setHexLayerOpacity(value) {
-  hexLayerOpacity = value;
+  hexLayerOpacity = value
 
   if (hexLayer) {
-    hexLayer.opacity = value;
+    hexLayer.opacity = value
   }
 }
 
-/** 
+/**
  *  Clear all layers that have been added to a map.
  */
 function clearAllLayers() {
-  if (hexLayer) view.map.layers.remove(hexLayer);
+  if (hexLayer) view.map.layers.remove(hexLayer)
   if (screenerLayers) {
     for (const layer in screenerLayers) {
-      view.map.layers.remove(screenerLayers[layer]);  }
+      view.map.layers.remove(screenerLayers[layer])
     }
-  hexLayer = null;
-  hexStore = null;
-  screenerLayers = {};
-  cityFile = null;
+  }
+  hexLayer = null
+  hexStore = null
+  screenerLayers = {}
 }
 
 /**
@@ -375,13 +363,13 @@ function clearAllLayers() {
  * @param {boolean} visible - true = show, false = hide
  */
 export function toggleLayer(layerName, visible = true) {
-  console.log("Toggling layer:", layerName, "to", visible);
-  console.log(screenerLayers);
-  const layer = screenerLayers[layerName]; // screenerLayers is object storing layer references
+  console.log('Toggling layer:', layerName, 'to', visible)
+  console.log(screenerLayers)
+  const layer = screenerLayers[layerName] // screenerLayers is object storing layer references
   if (layer) {
-    console.log(`Toggling layer "${layerName}" to ${visible}`);
-    layer.visible = visible;
+    console.log(`Toggling layer "${layerName}" to ${visible}`)
+    layer.visible = visible
   } else {
-    console.warn(`Layer "${layerName}" not found.`);
+    console.warn(`Layer "${layerName}" not found.`)
   }
 }
