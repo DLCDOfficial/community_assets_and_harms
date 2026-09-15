@@ -127,14 +127,12 @@ export async function createPlaceElements(comboboxEl, callback, filename = 'plac
       grouped[d.region].push(d.name)
     }
 
-    console.log(grouped)
-
     // --- 4. ADD TO GROUPS ---
     for (const region in grouped) {
       const groupEl = comboboxEl.querySelector(`calcite-combobox-item-group[label="${region}"]`)
 
       if (!groupEl) {
-        console.log('Missing group:', region)
+        console.warn('Missing group:', region)
         continue
       }
 

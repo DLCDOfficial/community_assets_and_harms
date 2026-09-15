@@ -45,9 +45,7 @@ export async function loadHexData(parquetFile) {
     const data_value = d['value']
     const data_type = d['type']
     if (data_type === 'flag' && data_value != 0) {
-      console.log('FLAG!')
       const data_var = d['var']
-      console.log(data_var)
       flags_data[data_var].push(id)
     }
     if (!hexStore[id]) {

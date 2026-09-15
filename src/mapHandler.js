@@ -130,7 +130,6 @@ function addHexOutlinesToMap(map, screenerInfo) {
   })
 
   map.add(layer)
-  console.log('Added screener layer:', layerName)
   screenerLayers[layerName] = layer
 }
 
@@ -226,11 +225,7 @@ export function initMapHandler(mapView) {
     if (results.length > 0) {
       const graphic = results[0].graphic
       const rendererString = graphic.attributes.compositeKey
-
-      console.log('Hex clicked:', rendererString)
-
       const legend_div = document.getElementById(rendererString)
-      console.log(legend_div)
 
       legend_div.style.border = '3px solid yellow'
       highlightedCell = legend_div
@@ -293,7 +288,6 @@ export async function loadCity(fileName) {
   attachHoverTooltip(view, hexLayer)
   for (const flag in flags_data) {
     if (flags_data[flag].length > 0) {
-      console.log('Adding screener layer for:', flag)
       addHexOutlinesToMap(view.map, {
         hexIds: flags_data[flag],
         color: colors[flag],
@@ -363,11 +357,8 @@ function clearAllLayers() {
  * @param {boolean} visible - true = show, false = hide
  */
 export function toggleLayer(layerName, visible = true) {
-  console.log('Toggling layer:', layerName, 'to', visible)
-  console.log(screenerLayers)
   const layer = screenerLayers[layerName] // screenerLayers is object storing layer references
   if (layer) {
-    console.log(`Toggling layer "${layerName}" to ${visible}`)
     layer.visible = visible
   } else {
     console.warn(`Layer "${layerName}" not found.`)
