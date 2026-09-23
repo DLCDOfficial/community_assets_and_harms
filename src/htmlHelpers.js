@@ -1,8 +1,7 @@
 // htmlHelpers.js
 // Utilities for loading data, creating calcite-combobox items, and handling tooltips
 
-import { loadParquet } from './dataProcessor.js';
-
+import { loadParquet } from './dataProcessor.js'
 
 /**
  * Append <calcite-combobox-item> elements to a parent element.
@@ -10,36 +9,32 @@ import { loadParquet } from './dataProcessor.js';
  * @param {string[]} values - Array of values to append.
  */
 function appendComboboxItems(comboboxEl, in_values) {
-
   // this is a hacky solution to solve sorting :/
 
   const renameMap = {
-      burn_prob: "wildfire_burn_prob",
-      flame_length: "wildfire_flame_length",
-      earthquake_liquid: "liquefaction_earthquake"
-  };
+    burn_prob: 'wildfire_burn_prob',
+    flame_length: 'wildfire_flame_length',
+    earthquake_liquid: 'liquefaction_earthquake'
+  }
 
-  const values = in_values.map(val => ({
-    val: val,
+  const values = in_values.map((val) => ({
+    val,
     sortval: renameMap[val] || val
-  }));
+  }))
 
- 
-
-  if (!comboboxEl) return;
+  if (!comboboxEl) return
 
   values
     .sort((a, b) => a.sortval.localeCompare(b.sortval))
-    .forEach(obj => {
+    .forEach((obj) => {
+      const item = document.createElement('calcite-combobox-item')
 
-      const item = document.createElement('calcite-combobox-item');
+      item.setAttribute('value', obj.val) // use original value
+      const header = formatHeader(obj.val)
+      item.setAttribute('heading', header)
 
-      item.setAttribute('value', obj.val);  // use original value
-      const header = formatHeader(obj.val);
-      item.setAttribute('heading', header);
-
-      comboboxEl.append(item);
-    });
+      comboboxEl.append(item)
+    })
 }
 
 /**
@@ -49,28 +44,27 @@ function appendComboboxItems(comboboxEl, in_values) {
  * @returns {string} - Formatted string
  */
 export function formatHeader(str) {
-  if (!str) return "";
+  if (!str) return ''
 
   // Define exceptions
   const exceptions = {
-    "community_center_dist": "Community Center Distance",
-    "library_dist": "Library Distance",
-    "burn_prob": "Wildfire Burn Probability",
-    "flame_length": "Wildfire Flame Length",
-    "earthquake_liquid": "Liquefaction- Earthquake"
-  };
+    community_center_dist: 'Community Center Distance',
+    library_dist: 'Library Distance',
+    burn_prob: 'Wildfire Burn Probability',
+    flame_length: 'Wildfire Flame Length',
+    earthquake_liquid: 'Liquefaction- Earthquake'
+  }
 
   // Check if str matches an exception
-  if (exceptions[str]) return exceptions[str];
+  if (exceptions[str]) return exceptions[str]
 
   //remove underscores, capitalize each word
   return str
     .replace(/_/g, ' ')
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
 }
-
 
 /**
  * Attach a change listener to a calcite-combobox.
@@ -79,12 +73,12 @@ export function formatHeader(str) {
  * @param {Function} callback - Receives selected values array.
  */
 function attachComboboxListener(comboboxEl, callback) {
-  if (!comboboxEl) return;
+  if (!comboboxEl) return
 
   comboboxEl.addEventListener('calciteComboboxChange', () => {
-    const values = comboboxEl.selectedItems?.map(item => item.value) || [];
-    callback(values);
-  });
+    const values = comboboxEl.selectedItems?.map((item) => item.value) || []
+    callback(values)
+  })
 }
 
 /**
@@ -94,9 +88,9 @@ function attachComboboxListener(comboboxEl, callback) {
  * @param {string} type - "asset" or "harm"
  */
 function appendGroupedItems(groupEl, data, type) {
-  if (!groupEl) return;
-  const values = data.filter(d => d.type === type).map(d => d.value);
-  appendComboboxItems(groupEl, values);
+  if (!groupEl) return
+  const values = data.filter((d) => d.type === type).map((d) => d.value)
+  appendComboboxItems(groupEl, values)
 }
 
 /**
@@ -106,94 +100,78 @@ function appendGroupedItems(groupEl, data, type) {
  * @param {string} filename -  Parquet file name (probably places.parquet)
  */
 
-export async function createPlaceElements(
-  comboboxEl,
-  callback,
-  filename = 'places.parquet'
-) {
+export async function createPlaceElements(comboboxEl, callback, filename = 'places.parquet') {
   try {
-    const data = await loadParquet(filename);
+    const data = await loadParquet(filename)
 
-    if (!comboboxEl) return;
+    if (!comboboxEl) return
 
     // --- 1. CLEAN + NORMALIZE ---
     const cleaned = data
-      .filter(d => d?.name && d?.region)
-      .map(d => ({
+      .filter((d) => d?.name && d?.region)
+      .map((d) => ({
         name: d.name.trim(),
         region: d.region.trim()
-      }));
+      }))
 
     // --- 2. SORT BY PLACE NAME ---
-    cleaned.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    cleaned.sort((a, b) => a.name.localeCompare(b.name))
 
     // --- 3. GROUP BY REGION ---
-    const grouped = {};
+    const grouped = {}
 
     for (const d of cleaned) {
       if (!grouped[d.region]) {
-        grouped[d.region] = [];
+        grouped[d.region] = []
       }
-      grouped[d.region].push(d.name);
+      grouped[d.region].push(d.name)
     }
-
-    console.log(grouped);
 
     // --- 4. ADD TO GROUPS ---
     for (const region in grouped) {
-
-      const groupEl = comboboxEl.querySelector(
-        `calcite-combobox-item-group[label="${region}"]`
-      );
+      const groupEl = comboboxEl.querySelector(`calcite-combobox-item-group[label="${region}"]`)
 
       if (!groupEl) {
-        console.log("Missing group:", region);
-        continue;
+        console.warn('Missing group:', region)
+        continue
       }
 
-      const cities = grouped[region];
+      const cities = grouped[region]
 
       for (const city of cities) {
-        const item = document.createElement("calcite-combobox-item");
+        const item = document.createElement('calcite-combobox-item')
 
-        item.setAttribute("value", city);
-        item.setAttribute("text-label", city);
+        item.setAttribute('value', city)
+        item.setAttribute('text-label', city)
 
-        groupEl.appendChild(item);
+        groupEl.appendChild(item)
       }
     }
 
     // --- 5. SELECTION HANDLER ---
     attachComboboxListener(comboboxEl, (values) => {
-      const normalized =
-        values[0]?.replaceAll(/[ /]/g, "_").toLowerCase() || null;
+      const normalized = values[0]?.replaceAll(/[ /]/g, '_').toLowerCase() || null
 
-      callback(normalized);
-    });
-
+      callback(normalized)
+    })
   } catch (err) {
-    console.error("Failed to create place elements:", err);
+    console.error('Failed to create place elements:', err)
   }
 }
 
-
-
-
 export async function createPlaceElementsold(comboboxEl, callback, filename = 'places.parquet') {
   try {
-    const data = await loadParquet(filename);
-    const placeNames = data.map(d => d.name);
-    appendComboboxItems(comboboxEl, placeNames);
+    const data = await loadParquet(filename)
+    const placeNames = data.map((d) => d.name)
+    appendComboboxItems(comboboxEl, placeNames)
 
     attachComboboxListener(comboboxEl, (values) => {
       // Take first value and normalize
-      const normalized = values[0]?.replaceAll(/[ /]/g, "_").toLowerCase() || null;
-      callback(normalized);
-    });
+      const normalized = values[0]?.replaceAll(/[ /]/g, '_').toLowerCase() || null
+      callback(normalized)
+    })
   } catch (err) {
-    console.error("Failed to create place elements:", err);
+    console.error('Failed to create place elements:', err)
   }
 }
 
@@ -203,21 +181,25 @@ export async function createPlaceElementsold(comboboxEl, callback, filename = 'p
  * @param {Function} callback - Receives an array of selected values or null.
  * @param {string} filename - Optional Parquet file name
  */
-export async function createIndicatorElements(comboboxEl, callback, filename = 'harms_assets.parquet') {
+export async function createIndicatorElements(
+  comboboxEl,
+  callback,
+  filename = 'harms_assets.parquet'
+) {
   try {
-    const data = await loadParquet(filename);
+    const data = await loadParquet(filename)
 
-    const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]');
-    const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]');
+    const harmsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Harms"]')
+    const assetsGroup = comboboxEl.querySelector('calcite-combobox-item-group[label="Assets"]')
 
-    appendGroupedItems(assetsGroup, data, 'asset');
-    appendGroupedItems(harmsGroup, data, 'harm');
+    appendGroupedItems(assetsGroup, data, 'asset')
+    appendGroupedItems(harmsGroup, data, 'harm')
 
     attachComboboxListener(comboboxEl, (values) => {
-      callback(values.length ? values : null);
-    });
+      callback(values.length ? values : null)
+    })
   } catch (err) {
-    console.error("Failed to create indicator elements:", err);
+    console.error('Failed to create indicator elements:', err)
   }
 }
 
@@ -227,27 +209,27 @@ export async function createIndicatorElements(comboboxEl, callback, filename = '
  * @param {Function} callback - Receives selected value.
  */
 export function attachRadioListener(radioGroupEl, callback) {
-  const el = typeof radioGroupEl === 'string' ? document.getElementById(radioGroupEl) : radioGroupEl;
-  if (!el) return;
+  const el = typeof radioGroupEl === 'string' ? document.getElementById(radioGroupEl) : radioGroupEl
+  if (!el) return
 
-  el.addEventListener("calciteRadioButtonGroupChange", () => {
-    callback(el.value);
-  });
+  el.addEventListener('calciteRadioButtonGroupChange', () => {
+    callback(el.value)
+  })
 }
 
 /**
  * Tooltip helper functions
  */
 function showTooltip(tooltipEl, content, x, y) {
-  if (!tooltipEl) return;
-  tooltipEl.innerHTML = content;
-  tooltipEl.style.left = `${x}px`;
-  tooltipEl.style.top = `${y}px`;
-  tooltipEl.style.display = 'block';
+  if (!tooltipEl) return
+  tooltipEl.innerHTML = content
+  tooltipEl.style.left = `${x}px`
+  tooltipEl.style.top = `${y}px`
+  tooltipEl.style.display = 'block'
 }
 
 function hideTooltip(tooltipEl) {
-  if (tooltipEl) tooltipEl.style.display = 'none';
+  if (tooltipEl) tooltipEl.style.display = 'none'
 }
 
 /**
@@ -256,43 +238,45 @@ function hideTooltip(tooltipEl) {
  * @param {Object} hexLayer - Layer containing hex graphics
  */
 export function attachHoverTooltip(view, hexLayer) {
-  const tooltip = document.getElementById("hover-tooltip");
-  if (!tooltip) return;
+  const tooltip = document.getElementById('hover-tooltip')
+  if (!tooltip) return
 
-  let scheduled = false;
+  let scheduled = false
 
   async function updateTooltip(event) {
-    const response = await view.hitTest(event, { include: hexLayer });
+    const response = await view.hitTest(event, { include: hexLayer })
     if (response.results.length) {
-      const hitGraphic = response.results[0].graphic;
+      const hitGraphic = response.results[0].graphic
       const originalGraphic = hexLayer.source.items.find(
-        g => g.attributes.grid_id === hitGraphic.attributes.grid_id
-      );
+        (g) => g.attributes.grid_id === hitGraphic.attributes.grid_id
+      )
 
       if (originalGraphic) {
-        const attrs = originalGraphic.attributes;
-        const { native: { clientX: x, clientY: y } } = event;
+        const attrs = originalGraphic.attributes
+        const {
+          native: { clientX: x, clientY: y }
+        } = event
         showTooltip(
           tooltip,
           `<div><strong>Harms:</strong> ${attrs.final_value_harms}</div>
            <div><strong>Assets:</strong> ${attrs.final_value_assets}</div>`,
           x,
           y
-        );
+        )
       }
     } else {
-      hideTooltip(tooltip);
+      hideTooltip(tooltip)
     }
   }
 
-  view.on("pointer-move", (event) => {
-    if (scheduled) return;
-    scheduled = true;
+  view.on('pointer-move', (event) => {
+    if (scheduled) return
+    scheduled = true
     requestAnimationFrame(async () => {
-      scheduled = false;
-      await updateTooltip(event);
-    });
-  });
+      scheduled = false
+      await updateTooltip(event)
+    })
+  })
 
-  view.on("pointer-leave", () => hideTooltip(tooltip));
+  view.on('pointer-leave', () => hideTooltip(tooltip))
 }

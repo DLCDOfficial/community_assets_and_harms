@@ -1,6 +1,6 @@
-@import "https://js.arcgis.com/calcite-components/3.2.1/calcite.css";
-@import "https://js.arcgis.com/4.33/@arcgis/core/assets/esri/themes/light/main.css";
-@import "https://js.arcgis.com/4.33/map-components/main.css";
+@import 'https://js.arcgis.com/calcite-components/3.2.1/calcite.css';
+@import 'https://js.arcgis.com/4.33/@arcgis/core/assets/esri/themes/light/main.css';
+@import 'https://js.arcgis.com/4.33/map-components/main.css';
 
 html,
 body {
@@ -25,7 +25,7 @@ arcgis-map {
 #hover-tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.75);
   color: white;
   padding: 4px 8px;
   border-radius: 4px;

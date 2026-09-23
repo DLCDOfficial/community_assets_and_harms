@@ -1,8 +1,8 @@
 // dataProcessor.js
 // Utility function for loading and structuring h3 hex data from a parquet fil
-//  used as input for map handling. 
+//  used as input for map handling.
 
-import { snappyUncompressor } from 'hysnappy';
+import { snappyUncompressor } from 'hysnappy'
 
 /**
  * Load and parse a Parquet file.
@@ -12,14 +12,14 @@ import { snappyUncompressor } from 'hysnappy';
  * @returns {Promise<Array<object>>} Parsed parquet data.
  */
 export async function loadParquet(filename) {
-  const { asyncBufferFromUrl, parquetQuery } = await import('hyparquet');
-  const prefix = import.meta.env.VITE_PATH;
-  const file = await asyncBufferFromUrl({ url: `${prefix}/${filename}` });
+  const { asyncBufferFromUrl, parquetQuery } = await import('hyparquet')
+  const prefix = import.meta.env.VITE_PATH
+  const file = await asyncBufferFromUrl({ url: `${prefix}/${filename}` })
 
   return parquetQuery({
     file,
     compressors: { SNAPPY: snappyUncompressor() }
-  });
+  })
 }
 
 /**
@@ -30,29 +30,31 @@ export async function loadParquet(filename) {
  * @returns {Promise<{hexStore: Record<string, object[]>, uniqueHexes: string[]}>}
  */
 export async function loadHexData(parquetFile) {
-  const data = await loadParquet(parquetFile);
+  const data = await loadParquet(parquetFile)
 
-  const flags_data = {electric_transmission_lines: [],highway: [],tsunami_zone: [],floodway: []}
-  const hexStore = {};
-  data.forEach(d => {
-    const id = d['grid_id'];
+  const flags_data = {
+    electric_transmission_lines: [],
+    highway: [],
+    tsunami_zone: [],
+    floodway: []
+  }
+  const hexStore = {}
+  data.forEach((d) => {
+    const id = d['grid_id']
 
-    const data_value = d['value'];
-    const data_type = d['type'];
-    if (data_type === 'flag' && data_value != 0) {
-      console.log("FLAG!")
-      const data_var= d['var'];
-      console.log(data_var);
-      flags_data[data_var].push(id);
+    const data_value = d['value']
+    const data_type = d['type']
+    if (data_type === 'flag' && data_value !== 0) {
+      const data_var = d['var']
+      flags_data[data_var].push(id)
     }
     if (!hexStore[id]) {
-      hexStore[id] = [];
+      hexStore[id] = []
     }
-    hexStore[id].push(d);
-    
-  });
+    hexStore[id].push(d)
+  })
 
-  const uniqueHexes = Object.keys(hexStore);
+  const uniqueHexes = Object.keys(hexStore)
 
-  return { hexStore, uniqueHexes, flags_data };
+  return { hexStore, uniqueHexes, flags_data }
 }

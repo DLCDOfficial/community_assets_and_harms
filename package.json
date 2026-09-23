@@ -6,7 +6,11 @@
     "dev": "vite",
     "build": "vite build && mkdir ./dist/data && cp ./data/* ./dist/data/",
     "preview": "vite preview",
-    "write": "node ./parquet_writer/index.js && cp ./parquet_writer/data/*.parquet ./data/"
+    "write": "node ./parquet_writer/index.js && cp ./parquet_writer/data/*.parquet ./data/",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@arcgis/core": "~4.33.0",
@@ -18,7 +22,13 @@
   },
   "devDependencies": {
     "@dsnp/parquetjs": "^1.8.7",
+    "@eslint/js": "^8.57.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "globals": "^15.15.0",
     "papaparse": "^5.5.3",
+    "prettier": "^3.9.6",
     "vite": "^6.3.5",
     "vite-plugin-node-polyfills": "^0.24.0"
   }
